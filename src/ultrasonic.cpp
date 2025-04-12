@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "ultrasonic.h"
 
 // defines pins numbers
 const int trigPin = 9;
