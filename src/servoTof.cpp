@@ -93,3 +93,10 @@ int getCurrentAngle()
 {
   return currentAngle;
 }
+
+void resetServo()
+{
+  currentAngle = 90;
+  dir = 1; // add extra logic to here later.
+  myServo.write(currentAngle);
+}

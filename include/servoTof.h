@@ -12,3 +12,4 @@ bool isPaused();
 bool pauseDone(unsigned long duration);
 void resetPause();
 int getCurrentAngle();
+void resetServo();
