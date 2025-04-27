@@ -1,13 +1,15 @@
 #include "motor.h"
+#include "motionControl.h"
 #include <Arduino.h>
 
 // === Pin Definitions ===
 const int STBY = 2;
 
-const int PWM1 = 3, IN1_1 = 4, IN2_1 = 7;
-const int PWM2 = 5, IN1_2 = 8, IN2_2 = 12;
-const int PWM3 = 6, IN1_3 = 10, IN2_3 = 11;
-const int PWM4 = 9, IN1_4 = A0, IN2_4 = A1;
+const int PWM1 = 3, IN1_1 = 4, IN2_1 = 7;   // Motor 1 speed, direction pin 1, direction pin 2
+const int PWM2 = 5, IN1_2 = 8, IN2_2 = 12;  // Motor 2 speed, direction pin 1, direction pin 2
+const int PWM3 = 6, IN1_3 = 10, IN2_3 = 11; // Motor 3 speed, direction pin 1, direction pin 2
+const int PWM4 = 9, IN1_4 = A0, IN2_4 = A1; // Motor 4 speed, direction pin 1 (A0 = digital 14),
+                                            // direction pin 2 (A1 = digital 15)
 
 // === Internal State ===
 static bool motorEnabled[4] = {true, true, true, true};
@@ -30,7 +32,7 @@ void initMotors()
 {
   int pins[] = {STBY, PWM1,  IN1_1, IN2_1, PWM2,  IN1_2, IN2_2,
                 PWM3, IN1_3, IN2_3, PWM4,  IN1_4, IN2_4};
-  for (int i = 0; i < sizeof(pins) / sizeof(pins[0]); i++)
+  for (size_t i = 0; i < sizeof(pins) / sizeof(pins[0]); i++)
   {
     pinMode(pins[i], OUTPUT);
   }
@@ -50,7 +52,7 @@ void updateMotors()
   digitalWrite(IN1_4, motorDirection[3]);
   digitalWrite(IN2_4, !motorDirection[3]);
 
-  // Apply speed
+  // Apply speed //	If enabled, send the trimmed speed; if disabled, send 0 (motor stops)
   analogWrite(PWM1, motorEnabled[0] ? trimmedPWM(0) : 0);
   analogWrite(PWM2, motorEnabled[1] ? trimmedPWM(1) : 0);
   analogWrite(PWM3, motorEnabled[2] ? trimmedPWM(2) : 0);
@@ -83,4 +85,9 @@ void setUseTrim(bool trimOn)
 void setBaseSpeed(int speed)
 {
   baseSpeed = constrain(speed, 0, 255);
+}
+
+void setStandby(bool enable)
+{
+  digitalWrite(STBY, enable ? HIGH : LOW);
 }

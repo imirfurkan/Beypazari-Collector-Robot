@@ -9,7 +9,8 @@ void setMotionMode(MotionMode mode)
 
   switch (mode)
   {
-  case MOVE_FORWARD:
+  case MOVE_BACKWARD:
+    setStandby(true);
     for (int i = 0; i < 4; i++)
     {
       setMotorEnabled(i, true);
@@ -17,7 +18,8 @@ void setMotionMode(MotionMode mode)
     }
     break;
 
-  case MOVE_BACKWARD:
+  case MOVE_FORWARD:
+    setStandby(true);
     for (int i = 0; i < 4; i++)
     {
       setMotorEnabled(i, true);
@@ -25,29 +27,20 @@ void setMotionMode(MotionMode mode)
     }
     break;
 
-  case MOVE_LEFT:
+  case MOVE_RIGHT:
+    setStandby(true);
     setMotorEnabled(0, true);
-    setMotorDirection(0, REVERSE);
+    setMotorDirection(0, FORWARD);
     setMotorEnabled(1, true);
-    setMotorDirection(1, FORWARD);
+    setMotorDirection(1, REVERSE);
     setMotorEnabled(2, true);
     setMotorDirection(2, FORWARD);
     setMotorEnabled(3, true);
     setMotorDirection(3, REVERSE);
     break;
 
-  case MOVE_RIGHT:
-    setMotorEnabled(0, true);
-    setMotorDirection(0, FORWARD);
-    setMotorEnabled(1, true);
-    setMotorDirection(1, REVERSE);
-    setMotorEnabled(2, true);
-    setMotorDirection(2, REVERSE);
-    setMotorEnabled(3, true);
-    setMotorDirection(3, FORWARD);
-    break;
-
-  case ROTATE_LEFT:
+  case MOVE_LEFT:
+    setStandby(true);
     setMotorEnabled(0, true);
     setMotorDirection(0, REVERSE);
     setMotorEnabled(1, true);
@@ -59,23 +52,27 @@ void setMotionMode(MotionMode mode)
     break;
 
   case ROTATE_RIGHT:
+    setStandby(true);
     setMotorEnabled(0, true);
     setMotorDirection(0, FORWARD);
+    setMotorEnabled(1, true);
+    setMotorDirection(1, FORWARD);
+    setMotorEnabled(2, true);
+    setMotorDirection(2, REVERSE);
+    setMotorEnabled(3, true);
+    setMotorDirection(3, REVERSE);
+    break;
+
+  case ROTATE_LEFT:
+    setStandby(true);
+    setMotorEnabled(0, true);
+    setMotorDirection(0, REVERSE);
     setMotorEnabled(1, true);
     setMotorDirection(1, REVERSE);
     setMotorEnabled(2, true);
     setMotorDirection(2, FORWARD);
     setMotorEnabled(3, true);
-    setMotorDirection(3, REVERSE);
-    break;
-
-  case RETURN_MODE:
-    setMotorEnabled(0, true);
-    setMotorDirection(0, REVERSE);
-    setMotorEnabled(1, false);
-    setMotorEnabled(2, true);
-    setMotorDirection(2, REVERSE);
-    setMotorEnabled(3, false);
+    setMotorDirection(3, FORWARD);
     break;
 
   case STOP:
@@ -84,6 +81,7 @@ void setMotionMode(MotionMode mode)
     {
       setMotorEnabled(i, false);
     }
+    setStandby(false);
     break;
   }
 }

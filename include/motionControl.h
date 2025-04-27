@@ -8,7 +8,6 @@ enum MotionMode
   MOVE_RIGHT,
   ROTATE_LEFT,
   ROTATE_RIGHT,
-  RETURN_MODE,
   STOP
 };
 

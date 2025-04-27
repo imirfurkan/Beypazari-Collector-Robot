@@ -23,7 +23,7 @@ void initTof()
     {
     }
   }
-  tof.setMeasurementTimingBudgetMicroSeconds(50000);
+  tof.setMeasurementTimingBudgetMicroSeconds(50000); // TODO: why 50000?
   if (!tof.startRangeContinuous(33))
   {
     Serial.println("Failed to start TOF continuous mode!");

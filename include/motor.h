@@ -14,3 +14,4 @@ void setMotorDirection(int i, Direction dir);
 void setKTrim(int i, float k);
 void setUseTrim(bool trimOn);
 void setBaseSpeed(int speed);
+void setStandby(bool enable);
