@@ -2,15 +2,17 @@
 
 enum MotionMode
 {
-  MOVE_FORWARD,
-  MOVE_BACKWARD,
-  MOVE_LEFT,
-  MOVE_RIGHT,
-  ROTATE_LEFT,
-  ROTATE_RIGHT,
+  DRIVE_FORWARD,
+  GENTLE_LEFT,
+  GENTLE_RIGHT,
+  PIVOT_LEFT,
+  PIVOT_RIGHT,
   STOP
 };
 
-extern MotionMode currentMode;
-
-void setMotionMode(MotionMode mode);
+void driveForward();
+void gentleLeft();
+void gentleRight();
+void pivotLeft();
+void pivotRight();
+void applyMotion(MotionMode mode);

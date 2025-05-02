@@ -1,39 +1,43 @@
 #include <Arduino.h>
 #include "ultrasonic.h"
 
-// // defines pins numbers
-// const int trigPin = 9;
-// const int echoPin = 10;
+// Internal physical pin mappings (not exposed)
+static const int TRIG_LEFT = 31, ECHO_LEFT = 32;
+static const int TRIG_MID = 33, ECHO_MID = 34;
+static const int TRIG_RIGHT = 35, ECHO_RIGHT = 36;
 
-// safe max duration in µs so that there is no overflow
-const unsigned long MAX_DURATION = 50000;
-
-void ultrasonicSetup(int trigPin, int echoPin)
-{
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT);  // Sets the echoPin as an Input
-}
-
-float measureDistance(int trigPin, int echoPin)
+// Generic distance helper
+unsigned int getDistanceCM(int trigPin, int echoPin)
 {
   digitalWrite(trigPin, LOW);
-  delayMicroseconds(5);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
+  unsigned long duration = pulseIn(echoPin, HIGH, 30000UL);
+  return duration ? duration / 58 : 999;
+}
 
-  unsigned long duration =
-      pulseIn(echoPin, HIGH); // unsigned is better for embedded systems with little memory. avoid
-  // mixing signed and unsigned numbers though.
+void initUltrasonics()
+{
+  pinMode(TRIG_LEFT, OUTPUT);
+  pinMode(ECHO_LEFT, INPUT);
+  pinMode(TRIG_MID, OUTPUT);
+  pinMode(ECHO_MID, INPUT);
+  pinMode(TRIG_RIGHT, OUTPUT);
+  pinMode(ECHO_RIGHT, INPUT);
+}
 
-  if (duration > MAX_DURATION) //   if (duration == 0 || duration > MAX_DURATION)
-  {
-    Serial.println("Object too far or no echo!");
-    // return NAN; // or some error value
-  }
-
-  Serial.print("Raw duration (µs): ");
-  Serial.println(duration);
-
-  return duration * 0.034 / 2;
+// Read distances with logical names
+unsigned int getLeftDistance()
+{
+  return getDistanceCM(TRIG_LEFT, ECHO_LEFT);
+}
+unsigned int getMiddleDistance()
+{
+  return getDistanceCM(TRIG_MID, ECHO_MID);
+}
+unsigned int getRightDistance()
+{
+  return getDistanceCM(TRIG_RIGHT, ECHO_RIGHT);
 }

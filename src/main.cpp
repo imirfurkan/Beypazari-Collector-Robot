@@ -1,242 +1,107 @@
-//////////////////////////////////////////////////////
-///////////// MOTORR & SERVO_TOF /////////////////////
-//////////////////////////////////////////////////////
-
 #include <Arduino.h>
-#include "servoTof.h"
 #include "motor.h"
 #include "motionControl.h"
+#include "ultrasonic.h"
 
-// --- USER-CONFIGURABLE PARAMETERS ---
-const int SERVO_PIN = 13;                        // Servo control pin
-const int STEP_ANGLE = 5;                        // Servo movement step in degrees
-const uint16_t DETECTION_THRESHOLD_MM = 150;     // Object detection distance threshold (mm)
-const unsigned long ROTATION_DURATION_MS = 2000; // How long to rotate (ms)
-const unsigned long SERVO_INTERVAL_MS = 50;      // How often to move the servo (ms)
+// Constants
+const int STBY = 30;
+const unsigned int DIST_THRESHOLD = 80;    // cm
+const unsigned int GRIPPER_THRESHOLD = 10; // cm
+const int ROTATE_STEP_MS = 200;
 
-// --- TIMING STATE ---
-unsigned long lastServoMoveTime = 0;
-unsigned long rotationStartTime = 0;
-bool rotationStarted = false;
-
-// --- ROBOT STATE MACHINE ---
+// ──────────────────────────────
+// Robot state machine (in main)
+// ──────────────────────────────
 enum RobotState
 {
-  SEARCHING_FORWARD,
-  FIRST_DETECTION
+  SEARCH,
+  APPROACH,
+  HANDLE_OBJECT,
+  LINE_SEARCH,
+  LINE_FOLLOW
 };
-RobotState currentState = SEARCHING_FORWARD;
+
+RobotState currentState = SEARCH;
 
 void setup()
 {
   Serial.begin(9600);
-  while (!Serial)
-  {
-  }
+  pinMode(STBY, OUTPUT);
+  digitalWrite(STBY, HIGH);
 
-  initServo(SERVO_PIN);
-  initTof();
   initMotors();
+  initUltrasonics();
 
-  setMotionMode(MOVE_FORWARD);
-  updateMotors();
+  Serial.println("Bottle seeker system ready.");
 }
 
 void loop()
 {
-  unsigned long now = millis();
+  // Sensor readings
+  unsigned int dL = getLeftDistance();
+  unsigned int dM = getMiddleDistance();
+  unsigned int dR = getRightDistance();
+  bool objAny = (dL < DIST_THRESHOLD) || (dM < DIST_THRESHOLD) || (dR < DIST_THRESHOLD);
+
+  // Emergency stop if object is too close
+  if (dM < GRIPPER_THRESHOLD)
+  {
+    stopAllMotors();
+    Serial.println(F("Object too close. Activating gripper..."));
+    delay(2000); // placeholder for gripper action
+    return;
+  }
 
   switch (currentState)
   {
-  case SEARCHING_FORWARD:
-    // Ensure car is moving forward
-    if (currentMode != MOVE_FORWARD)
+  case SEARCH:
+    if (!objAny)
     {
-      setMotionMode(MOVE_FORWARD);
-      updateMotors();
-    }
-
-    // Move servo every SERVO_INTERVAL_MS
-    if (now - lastServoMoveTime >= SERVO_INTERVAL_MS)
-    {
-      lastServoMoveTime = now;
-
-      updateServoDirection(STEP_ANGLE);
-      writeServoAngle();
-
-      uint16_t dist = readDistance();
-
-      Serial.print(getCurrentAngle());
-      Serial.print("\t");
-      Serial.println(dist);
-
-      if (objectDetected(dist, DETECTION_THRESHOLD_MM))
-      {
-        currentState = FIRST_DETECTION;
-      }
-    }
-    break;
-
-  case FIRST_DETECTION:
-    if (!rotationStarted)
-    {
-      Serial.print("Object detected at angle: ");
-      Serial.println(getCurrentAngle());
-
-      // Stop the car immediately
-      setMotionMode(STOP);
-      updateMotors();
-
-      // Reset servo to center
-      resetServo();
-
-      rotationStartTime = now; // Start rotation timing
-      rotationStarted = true;  // Mark that rotation has started
-
-      // Start rotating (simulate)
-      setMotionMode(ROTATE_LEFT);
-      updateMotors();
-
-      currentState = SEARCHING_FORWARD;
+      driveForward();
+      delay(100);
     }
     else
     {
-      // Wait for rotation duration, then resume moving forward
-      if (now - rotationStartTime >= ROTATION_DURATION_MS)
-      {
-        Serial.println("Rotation done, resuming forward movement...");
-
-        setMotionMode(MOVE_FORWARD);
-        updateMotors();
-
-        currentState = SEARCHING_FORWARD;
-        lastServoMoveTime = now - SERVO_INTERVAL_MS; // Force servo to move immediately
-        rotationStarted = false; // Rotation finished, reset flag for next detection
-      }
-      break;
+      currentState = APPROACH;
     }
-  }
-}
+    break;
 
-////
-
-/////////////////////////////////////////////////////////////////
-///// Servo & TOF Main.cpp //////
-/////////////////////////////////////////////////////////////////
-#include <Arduino.h>
-#include "servoTof.h"
-#include "motor.h"
-#include "motionControl.h"
-
-// --- USER-CONFIGURABLE PARAMETERS ---
-const int SERVO_PIN = 1;                      // Digital pin connected to the servo
-const int STEP_ANGLE = 5;                     // Servo movement step in degrees
-const uint16_t DETECTION_THRESHOLD_MM = 30;   // Distance threshold (mm) for object detection
-const unsigned long PAUSE_DURATION_MS = 2000; // How long to pause when an object is detected
-const unsigned long MOVE_INTERVAL_MS = 60;    // Interval between each servo step (ms)
-
-// --- TIMING STATE ---
-unsigned long lastMoveTime = 0; // Tracks last time the servo was moved
-
-void setup()
-{
-  // Initialize serial for debugging
-  Serial.begin(9600);
-  while (!Serial)
-  {
-  } // Wait for Serial to become available
-
-  // Initialize hardware
-  initServo(SERVO_PIN); // Attach servo to specified pin
-  initTof();            // Initialize Time-of-Flight (ToF) sensor
-  // initMotors();
-}
-
-void loop()
-{
-  unsigned long now = millis(); // Get the current system time
-
-  // === SWEEPING STATE ===
-  // Only proceed if not currently paused and enough time has passed since last move
-  if (!isPaused() && now - lastMoveTime >= MOVE_INTERVAL_MS)
-  {
-    lastMoveTime = now;
-
-    // // Always move forward when sweeping
-    // setMotionMode(MOVE_FORWARD);
-    // updateMotors();
-
-    // Update servo angle and write it to hardware
-    updateServoDirection(STEP_ANGLE);
-    writeServoAngle();
-
-    // Read distance from TOF sensor
-    uint16_t dist = readDistance();
-
-    // Print angle and distance for logging
-    Serial.print(getCurrentAngle());
-    Serial.print("\t");
-    Serial.println(dist);
-
-    // If an object is detected within threshold, enter pause state
-    if (objectDetected(dist, DETECTION_THRESHOLD_MM))
+  case APPROACH:
+    if (dL < DIST_THRESHOLD && dR >= DIST_THRESHOLD)
     {
-      Serial.print("Object detected at angle: ");
-      Serial.println(getCurrentAngle());
-      enterPause(); // Enter PAUSE mode and save the time
+      Serial.println("Rotate CCW");
+      unsigned long start = millis();
+      while (millis() - start < ROTATE_STEP_MS)
+        pivotLeft();
     }
+    else if (dR < DIST_THRESHOLD && dL >= DIST_THRESHOLD)
+    {
+      Serial.println("Rotate CW");
+      unsigned long start = millis();
+      while (millis() - start < ROTATE_STEP_MS)
+        pivotRight();
+    }
+
+    // Re-check middle sensor after rotate
+    dM = getMiddleDistance();
+    if (dM < DIST_THRESHOLD)
+    {
+      Serial.println("Centered – driving forward");
+      driveForward();
+    }
+
+    delay(100);
+    break;
+
+  case HANDLE_OBJECT:
+  case LINE_SEARCH:
+  case LINE_FOLLOW:
+    stopAllMotors();
+    // Not yet implemented
+    break;
+
+  default:
+    stopAllMotors();
+    break;
   }
-
-  // === PAUSE STATE ===
-  // If we are in pause state and the pause duration has elapsed, resume sweep
-  if (isPaused() && pauseDone(PAUSE_DURATION_MS))
-  {
-    Serial.println("Resuming sweep...");
-    resetPause();       // Exit pause mode
-    lastMoveTime = now; // Prevent immediate servo move after resume
-  }
-}
-
-/////////////////////////////////////////////////////////////////
-///// Only Motor Main //////
-/////////////////////////////////////////////////////////////////
-
-#include <Arduino.h>
-#include "motor.h"
-#include "motionControl.h"
-
-void setup()
-{
-  initMotors();
-}
-
-void loop()
-{
-  setMotionMode(MOVE_FORWARD);
-  updateMotors();
-  delay(5000);
-
-  setMotionMode(MOVE_BACKWARD);
-  updateMotors();
-  delay(5000);
-
-  setMotionMode(MOVE_LEFT);
-  updateMotors();
-  delay(5000);
-
-  setMotionMode(MOVE_RIGHT);
-  updateMotors();
-  delay(5000);
-
-  setMotionMode(ROTATE_LEFT);
-  updateMotors();
-  delay(5000);
-
-  setMotionMode(ROTATE_RIGHT);
-  updateMotors();
-  delay(5000);
-
-  setMotionMode(STOP);
-  updateMotors();
-  delay(5000);
 }

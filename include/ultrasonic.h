@@ -1,4 +1,6 @@
 #pragma once
 
-void ultrasonicSetup(int trigPin, int echoPin);
-float measureDistance(int trigPin, int echoPin);
+void initUltrasonics();
+unsigned int getLeftDistance();
+unsigned int getMiddleDistance();
+unsigned int getRightDistance();
