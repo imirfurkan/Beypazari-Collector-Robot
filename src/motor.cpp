@@ -5,11 +5,11 @@
 // === Pin Definitions ===
 const int STBY = 2;
 
-const int PWM1 = 3, IN1_1 = 4, IN2_1 = 7;   // Motor 1 speed, direction pin 1, direction pin 2
-const int PWM2 = 5, IN1_2 = 8, IN2_2 = 12;  // Motor 2 speed, direction pin 1, direction pin 2
-const int PWM3 = 6, IN1_3 = 10, IN2_3 = 11; // Motor 3 speed, direction pin 1, direction pin 2
-const int PWM4 = 9, IN1_4 = A0, IN2_4 = A1; // Motor 4 speed, direction pin 1 (A0 = digital 14),
-                                            // direction pin 2 (A1 = digital 15)
+const int PWM1 = 3, IN1_1 = 4, IN2_1 = 7;    // Motor 1 speed, direction pin 1, direction pin 2
+const int PWM2 = 5, IN1_2 = 8, IN2_2 = 12;   // Motor 2 speed, direction pin 1, direction pin 2
+const int PWM3 = 6, IN1_3 = 10, IN2_3 = 9;   // Motor 3 speed, direction pin 1, direction pin 2
+const int PWM4 = 11, IN1_4 = A0, IN2_4 = A1; // Motor 4 speed, direction pin 1 (A0 = digital 14),
+                                             // direction pin 2 (A1 = digital 15)
 
 // === Internal State ===
 static bool motorEnabled[4] = {true, true, true, true};
