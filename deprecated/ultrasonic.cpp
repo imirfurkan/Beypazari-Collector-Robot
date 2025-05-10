@@ -14,8 +14,9 @@ unsigned int getDistanceCM(int trigPin, int echoPin)
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  unsigned long duration = pulseIn(echoPin, HIGH, 30000UL);
-  return duration ? duration / 58 : 999;
+  unsigned long duration =
+      pulseIn(echoPin, HIGH, 30000UL);   // timeout at around 30000 microseconds = 30ms ~ 5m
+  return duration ? duration / 58 : 999; // division by 58 is equivalent to duration * 0.034 / 2.
 }
 
 void initUltrasonics()
