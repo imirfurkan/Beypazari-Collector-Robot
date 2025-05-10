@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 // LINE SEARCH & FOLLOW
-// #TODO 
+// #TODO
 // SISE SAYISINA GORE BLAST MS DEGISECEK
 
 // ────────────────────────────────────────────────
@@ -59,13 +59,17 @@ enum Robot_State
 {
   LINE_SEARCH,
   LINE_FOLLOW
-} Robot_State = LINE_SEARCH;
+};
+
+Robot_State robotState = LINE_SEARCH;
+
 enum LSState
 {
   LS_ROLL,
   LS_BLAST,
   LS_PIVOT
-} lsState = LS_ROLL;
+};
+LSState lsState = LS_ROLL;
 
 // for LS timing and side flag
 unsigned long lsStamp = 0;
@@ -189,7 +193,7 @@ unsigned int getDistance(int trig, int echo)
 // ────────────────────────────────────────────────
 void updateObstacleAvoid()
 {
-  if (Robot_State != LINE_SEARCH)
+  if (robotState != LINE_SEARCH)
     return;
   unsigned long now = millis();
   if (now - lastObsChk < OBS_DT)
@@ -269,7 +273,7 @@ void loop()
 
   // — debug dump at top of loop —
   Serial.print("LOOP: State=");
-  Serial.print(Robot_State == LINE_SEARCH ? "SEARCH" : "FOLLOW");
+  Serial.print(robotState == LINE_SEARCH ? "SEARCH" : "FOLLOW");
   Serial.print("  tapeFound=");
   Serial.print(tapeFound);
   Serial.print("  oaActive=");
@@ -280,7 +284,7 @@ void loop()
   Serial.println(hardRightActive);
 
   // —— LINE_SEARCH ———————————————————————————————
-  if (Robot_State == LINE_SEARCH)
+  if (robotState == LINE_SEARCH)
   {
     if (!tapeFound)
     {
@@ -371,7 +375,7 @@ void loop()
         stopAll();
         baseSpeed = BASE_SPEED_DEFAULT; // return to the normal speed for line follow
         driveForward();
-        Robot_State = LINE_FOLLOW;
+        robotState = LINE_FOLLOW;
       }
       break;
     }
@@ -379,7 +383,7 @@ void loop()
   }
 
   // —— LINE_FOLLOW ——————————————————————————————
-  if (Robot_State == LINE_FOLLOW)
+  if (robotState == LINE_FOLLOW)
   {
     // sample & normalize sensors
     float v1 = analogRead(L1) / 1023.0;

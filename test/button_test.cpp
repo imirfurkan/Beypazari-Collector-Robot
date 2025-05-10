@@ -11,7 +11,6 @@ const uint8_t SWITCH_PIN = 7;
 
 Servo capSrv;
 
-
 void setup() {
   Serial.begin(9600);
   pinMode(SWITCH_PIN, INPUT_PULLUP);
