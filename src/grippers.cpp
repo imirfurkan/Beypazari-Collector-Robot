@@ -1,204 +1,192 @@
-/*  ────────────────────────────────────────────────────────────
-    grippers.cpp  –  4-arm bottle-handling demo
-    • Stepper : L298N, 200 steps/rev, 20 RPM
-    • EN_PIN driven from one PWM pin to cut idle current
-    • Servos  : raiseElbow / lowerElbow  |  openClaw / closeClaw
-    • Lift    : performed by raiseElbow(currentArm)
-   ──────────────────────────────────────────────────────────── */
-
-#include <Arduino.h>
+#include "Grippers.h"
 #include <Servo.h>
 
-/* ── stepper constants ─────────────────────────────────────── */
-const int    STEPS_PER_REV  = 200;        // 1.8° motor
-const uint8_t EN_PIN        = 6;         // PWM – enable both bridges
+// ── Hardware constants ──────────────────────────────────────
+static const int STEPS_PER_REV = 200; // 1.8° stepper
+static const uint8_t EN_PIN = 6;      // PWM – enable coils
+static const int DIR_PIN = 2;         // A4988 DIR
+static const int STEP_PIN = 3;        // A4988 STEP
+static const float gearRatio = 225.0f / 90.0f;
+static const uint8_t NUM_ARMS = 2; // number of gripper arms
 
-/* ── A4988 driver pins & gear ratio ───────────────────────── */
-const int    DIR_PIN       = 2;           // STEP/DIR driver: DIR pin
-const int    STEP_PIN      = 3;           // STEP pin
-const float  gearRatio     = 225.0f / 90.0f;  // small gear : turret gear
+static const uint8_t ELBOW_PIN[2] = {37, 41};
+static const uint8_t CLAW_PIN[2] = {38, 42};
+static const uint8_t CAP_PUSHER_PIN = 39; // microswitch actuator
+static const uint8_t SWITCH_PIN = 7;      // cap‐present switch
 
-/* ── servo pin map ─────────────────────────────────────────── */
-const uint8_t ELBOW_PIN[4]   = {37, 41, 47, 49};
-const uint8_t CLAW_PIN[4]    = {38, 42, 48, 50};
-const uint8_t CAP_PUSHER_PIN = 39;        // microswitch test
-// your switch pin
-const uint8_t SWITCH_PIN = 7;
+// ── Angle presets ─────────────────────────────────────────
+static const uint8_t ELBOW_UP_ANGLE = 45;
+static const uint8_t ELBOW_DOWN_ANGLE = 110;
+static const uint8_t CLAW_OPEN_ANGLE = 30;
+static const uint8_t CLAW_CLOSE_ANGLE = 180;
+static const uint8_t CAP_UP_ANGLE = 30;   // TODO
+static const uint8_t CAP_DOWN_ANGLE = 70; // TODO
 
-Servo elbowSrv[4], clawSrv[4], capSrv;
+// ── Module state ───────────────────────────────────────────
+enum GripperState
+{
+  GRAB,
+  TEST_CAP,
+  STORE,
+  RESET_ARM,
+  REJECT_BOTTLE
+};
+static GripperState gripperState = GRAB;
+static uint8_t currentArm = 0;
+static uint8_t bottleCount = 0;
 
-/* ── angle presets ─────────────────────────────────────────── */
-const uint8_t ELBOW_UP_ANGLE    = 45;
-const uint8_t ELBOW_DOWN_ANGLE  = 110;
-const uint8_t CLAW_OPEN_ANGLE   = 30;
-const uint8_t CLAW_CLOSE_ANGLE  = 180;
-const uint8_t CAP_UP_ANGLE      = 60;
-const uint8_t CAP_DOWN_ANGLE    = 150;
+// ── Servo objects ──────────────────────────────────────────
+static Servo elbowSrv[2], clawSrv[2], capSrv;
 
-/* ── state machine ─────────────────────────────────────────── */
-enum GState { PRE_GRAB, GRAB, TEST_CAP, STORE_LIFT, STORE_ROTATE, RESET_ARM };  
-GState  state       = PRE_GRAB;
-uint8_t currentArm  = 0;
-uint8_t bottleCount = 0;
-
-/* ── enable / disable helpers ─────────────────────────────── */
-void enableStepper(uint8_t duty = 255)  // 255 = full torque
+// ── Private helpers ────────────────────────────────────────
+static void enableStepper(uint8_t duty = 255)
 {
   analogWrite(EN_PIN, duty);
-  delay(10);                          // wait for coils to energise
+  delay(10);
 }
-
-void disableStepper()                   // 0 = coils off
+static void disableStepper()
 {
   analogWrite(EN_PIN, 0);
 }
-
-/* ── turret rotation using A4988 full-step ───────────────── */
-void turretRotate(float desiredAngle) {
+static void turretRotate(float angle)
+{
   enableStepper();
-  // 1) compute equivalent small-gear angle
-  float smallGearAngle = desiredAngle * gearRatio;
-
-  // 2) convert to motor steps
-  int stepsToMove = int((smallGearAngle / 360.0) * STEPS_PER_REV);
-
-  // 3) step the motor
-  digitalWrite(DIR_PIN, HIGH);            // HIGH = CW, LOW = CCW
-  for (int i = 0; i < stepsToMove; ++i) {
+  // CW for positive angles, CCW for negative
+  bool directionCW = (angle >= 0);
+  digitalWrite(DIR_PIN, directionCW ? HIGH : LOW);
+  // convert angle to steps
+  int steps = abs(int((angle * gearRatio / 360.0f) * STEPS_PER_REV));
+  digitalWrite(DIR_PIN, HIGH);
+  for (int i = 0; i < steps; ++i)
+  {
     digitalWrite(STEP_PIN, HIGH);
     delayMicroseconds(5000);
     digitalWrite(STEP_PIN, LOW);
-    delay(5); // defines the rpm
+    delay(5); // sets the pwm
   }
-  delay(200); // wait for the motor to stop
+  delay(200);
+  // we disable the stepper driver here to avoid constant current
+  // draw when the arm is not moving and overheating the driver
   disableStepper();
 }
-
-/* ── claw helpers ──────────────────────────────────────────── */
-void openClaw(uint8_t armIdx)
+static void openClaw(uint8_t i)
 {
-  clawSrv[armIdx].attach(CLAW_PIN[armIdx]);
-  clawSrv[armIdx].write(CLAW_OPEN_ANGLE);
+  clawSrv[i].attach(CLAW_PIN[i]);
+  clawSrv[i].write(CLAW_OPEN_ANGLE);
   delay(200);
-  clawSrv[armIdx].detach();
+  clawSrv[i].detach();
 }
-
-void closeClaw(uint8_t armIdx)
+static void closeClaw(uint8_t i)
 {
-  clawSrv[armIdx].attach(CLAW_PIN[armIdx]);
-  clawSrv[armIdx].write(CLAW_CLOSE_ANGLE);
+  clawSrv[i].attach(CLAW_PIN[i]);
+  clawSrv[i].write(CLAW_CLOSE_ANGLE);
   delay(200);
-  clawSrv[armIdx].detach();
+  clawSrv[i].detach();
 }
-
-/* ── elbow helpers ─────────────────────────────────────────── */
-void raiseElbow(uint8_t armIdx)
+static void raiseElbow(uint8_t i)
 {
-  elbowSrv[armIdx].attach(ELBOW_PIN[armIdx]);
-  elbowSrv[armIdx].write(ELBOW_UP_ANGLE);
+  elbowSrv[i].attach(ELBOW_PIN[i]);
+  elbowSrv[i].write(ELBOW_UP_ANGLE);
   delay(200);
-  elbowSrv[armIdx].detach();
+  elbowSrv[i].detach();
 }
-
-void lowerElbow(uint8_t armIdx)
+static void lowerElbow(uint8_t i)
 {
-  elbowSrv[armIdx].attach(ELBOW_PIN[armIdx]);
-  elbowSrv[armIdx].write(ELBOW_DOWN_ANGLE);
+  elbowSrv[i].attach(ELBOW_PIN[i]);
+  elbowSrv[i].write(ELBOW_DOWN_ANGLE);
   delay(200);
-  elbowSrv[armIdx].detach();
+  elbowSrv[i].detach();
 }
-
-/* ── setup helpers ─────────────────────────────────────────── */
-void setupServos()
+static void setupServos()
 {
-  for (uint8_t i = 0; i < 4; ++i)
+  for (uint8_t i = 0; i < NUM_ARMS; ++i)
   {
-    raiseElbow(i);    // start raised
-    closeClaw(i);     // and closed
+    raiseElbow(i);
+    closeClaw(i);
   }
   capSrv.attach(CAP_PUSHER_PIN);
   capSrv.write(CAP_UP_ANGLE);
   capSrv.detach();
 }
-
-void setupStepper()
+static void setupStepper()
 {
-  pinMode(EN_PIN,    OUTPUT);
-  disableStepper();        // coils off at boot
-
-  // A4988 control pins
-  pinMode(DIR_PIN,  OUTPUT);
+  pinMode(EN_PIN, OUTPUT);
+  pinMode(DIR_PIN, OUTPUT);
   pinMode(STEP_PIN, OUTPUT);
   digitalWrite(DIR_PIN, LOW);
+  disableStepper();
 }
 
-/* ── Arduino lifecycle ────────────────────────────────────── */
-void setup()
+// ── Public API ──────────────────────────────────────────────
+void Grippers_setup()
 {
-  Serial.begin(9600);
+  pinMode(SWITCH_PIN, INPUT_PULLUP);
   setupServos();
   setupStepper();
-  Serial.println(F("Gripper demo ready (idle current minimised)"));
 }
 
-void loop()
+bool Grippers_loop()
 {
-  switch (state)
+  switch (gripperState)
   {
-    case PRE_GRAB:
-      Serial.println(F("PRE_GRAB → turret rotate 90° CCW"));
-      openClaw(currentArm);
-      lowerElbow(currentArm);
-      delay(600);
-      state = GRAB;
-      break;
+  case GRAB:
+    turretRotate(90.0f); // rotate to grab
+    openClaw(currentArm);
+    lowerElbow(currentArm);
+    delay(600);
 
-    case GRAB:
-      Serial.println(F("GRAB → closing claw"));
-      closeClaw(currentArm);
-      delay(600);
-      state = STORE_LIFT;
-      break;
+    closeClaw(currentArm);
+    delay(600);
+    gripperState = TEST_CAP;
+    break;
 
-    case TEST_CAP:
-      Serial.println(F("TEST_CAP → pressing & testing cap"));
-      capSrv.attach(CAP_PUSHER_PIN);
-      capSrv.write(CAP_DOWN_ANGLE);
-      delay(700);
+  case TEST_CAP:
+  {
+    capSrv.attach(CAP_PUSHER_PIN);
+    capSrv.write(CAP_DOWN_ANGLE);
+    delay(700);
+    bool capPresent = (digitalRead(SWITCH_PIN) == LOW);
+    capSrv.write(CAP_UP_ANGLE);
+    delay(250);
+    capSrv.detach();
 
-      // POLL the microswitch
-      if (digitalRead(SWITCH_PIN) == LOW) {
-        Serial.println(F("→ Cap detected"));
-      } else {
-        Serial.println(F("→ No cap detected"));
-      }
-
-      capSrv.write(CAP_UP_ANGLE);
-      delay(250);
-      capSrv.detach();
-
-      state = STORE_LIFT;
-      break;
-
-    case STORE_LIFT:
-      Serial.println(F("STORE_LIFT → raising elbow (individual lift)"));
-      raiseElbow(currentArm);
-      delay(400);
-      state = STORE_ROTATE;
-      break;
-
-    case STORE_ROTATE:
-      Serial.println(F("STORE_ROTATE → turret rotate 90° CW"));
-      turretRotate(90.0f);
-      state = RESET_ARM;
-      break;
-
-    case RESET_ARM:
-      Serial.println(F("RESET_ARM → advance to next arm"));
-      delay(400);
-      bottleCount++;
-      currentArm = (currentArm + 1) % 4;
-      state = PRE_GRAB;
-      break;
+    // branch based on cap presence
+    if (capPresent)
+    {
+      gripperState = REJECT_BOTTLE;
+    }
+    else
+    {
+      gripperState = STORE;
+    }
+    break;
   }
+
+  case STORE:
+    // TODO halfway lift
+    turretRotate(30.0f);
+    raiseElbow(currentArm);
+    delay(400);
+    turretRotate(60.0f);
+    gripperState = RESET_ARM;
+    break;
+
+  case RESET_ARM:
+    delay(400);
+    bottleCount++;
+    currentArm = (currentArm + 1) % NUM_ARMS;
+    gripperState = GRAB;
+    return true; // one full cycle done
+
+  case REJECT_BOTTLE:
+    // reject flow: open, lift, close, advance arm, no count
+    openClaw(currentArm);
+    raiseElbow(currentArm);
+    closeClaw(currentArm);
+    turretRotate(-90.0f);
+    currentArm = (currentArm + 1) % NUM_ARMS;
+    gripperState = GRAB;
+    return true;
+  }
+  return false;
 }
