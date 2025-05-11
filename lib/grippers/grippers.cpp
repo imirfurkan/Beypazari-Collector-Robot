@@ -9,10 +9,10 @@ static const int STEP_PIN = 3;        // A4988 STEP
 static const float gearRatio = 225.0f / 90.0f;
 static const uint8_t NUM_ARMS = 2; // number of gripper arms
 
-static const uint8_t ELBOW_PIN[2] = {37, 41};
-static const uint8_t CLAW_PIN[2] = {38, 42};
-static const uint8_t CAP_PUSHER_PIN = 39; // microswitch actuator
-static const uint8_t SWITCH_PIN = 7;      // cap‐present switch
+static const uint8_t ELBOW_PIN[2] = {36, 38};
+static const uint8_t CLAW_PIN[2] = {37, 39};
+static const uint8_t CAP_PUSHER_PIN = 40; // microswitch actuator
+static const uint8_t SWITCH_PIN = 41;      // cap‐present switch
 
 // ── Module‐local flag ───────────────────────────────────────
 static bool lastRejected = false;
