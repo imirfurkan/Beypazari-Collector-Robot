@@ -1,4 +1,4 @@
-#include "Grippers.h"
+#include "grippers.h"
 #include <Servo.h>
 
 // ── Hardware constants ──────────────────────────────────────
@@ -62,6 +62,10 @@ static void disableStepper()
 static void turretRotate(float angle)
 {
   enableStepper();
+  // The current logic is set up correctly for arm 0, so invert direction for arm 1. 
+  if (currentArm == 1) {
+    angle = -angle;
+  }
   // CW for positive angles, CCW for negative
   bool directionCW = (angle >= 0);
   digitalWrite(DIR_PIN, directionCW ? HIGH : LOW);
