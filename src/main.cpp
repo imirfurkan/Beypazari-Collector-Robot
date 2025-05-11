@@ -7,7 +7,8 @@ enum RobotState
 {
   SEEKING,
   GRIPPING,
-  NAVIGATING
+  NAVIGATING,
+  INTERRUPT
 };
 static RobotState robotState = SEEKING;
 
