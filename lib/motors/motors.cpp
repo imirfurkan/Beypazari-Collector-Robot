@@ -2,7 +2,7 @@
 #include "motors.h"
 
 // ── Internal state ────────────────────────────────────────
-static int s_baseSpeed = MOTOR_BASE_SPEED_DEFAULT;
+static int s_baseSpeed = MOTOR_SPEED_DEFAULT;
 
 // Compute the PWM for motor `idx` after applying its unloaded factor
 static int trimmedPWM(uint8_t idx)
@@ -39,7 +39,7 @@ void Motor_setBaseSpeed(int speed) // TODO
   s_baseSpeed = constrain(speed, 0, 255);
 }
 
-void Motor_stopAll()
+void Motor_stopAll() // TODO STBY kapamalı yap
 {
   for (uint8_t i = 0; i < 4; ++i)
   {
@@ -52,6 +52,14 @@ void Motor_driveForward()
   for (uint8_t i = 0; i < 4; ++i)
   {
     driveMotor(i, true);
+  }
+}
+
+void Motor_driveBackward()
+{
+  for (uint8_t i = 0; i < 4; ++i)
+  {
+    driveMotor(i, false);
   }
 }
 
@@ -72,5 +80,31 @@ void Motor_rotateCCW()
   {
     bool dir = (i < 2) ? !MOTOR_FORWARD_DIR : MOTOR_FORWARD_DIR;
     driveMotor(i, dir);
+  }
+}
+
+void Motor_gentleLeft()
+{
+  int leftPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT));
+  int rightPWM = MOTOR_GENTLE_SPEED;
+
+  for (uint8_t i = 0; i < 4; ++i)
+  {
+    digitalWrite(MOTOR_IN1_PIN[i], HIGH);
+    digitalWrite(MOTOR_IN2_PIN[i], LOW);
+    analogWrite(MOTOR_PWM_PIN[i], (i < 2) ? leftPWM : rightPWM);
+  }
+}
+
+void Motor_gentleRight()
+{
+  int leftPWM = MOTOR_GENTLE_SPEED;
+  int rightPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT));
+
+  for (uint8_t i = 0; i < 4; ++i)
+  {
+    digitalWrite(MOTOR_IN1_PIN[i], HIGH);
+    digitalWrite(MOTOR_IN2_PIN[i], LOW);
+    analogWrite(MOTOR_PWM_PIN[i], (i < 2) ? leftPWM : rightPWM);
   }
 }

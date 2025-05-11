@@ -14,6 +14,9 @@ static const uint8_t CLAW_PIN[2] = {38, 42};
 static const uint8_t CAP_PUSHER_PIN = 39; // microswitch actuator
 static const uint8_t SWITCH_PIN = 7;      // cap‐present switch
 
+// ── Module‐local flag ───────────────────────────────────────
+static bool lastRejected = false;
+
 // ── Angle presets ─────────────────────────────────────────
 static const uint8_t ELBOW_UP_ANGLE = 45;
 static const uint8_t ELBOW_DOWN_ANGLE = 110;
@@ -37,6 +40,12 @@ static uint8_t bottleCount = 0;
 
 // ── Servo objects ──────────────────────────────────────────
 static Servo elbowSrv[2], clawSrv[2], capSrv;
+
+// ─ Public API ──────────────────────────────────────────────
+bool bottleRejected()
+{
+  return lastRejected;
+}
 
 // ── Private helpers ────────────────────────────────────────
 static void enableStepper(uint8_t duty = 255)
@@ -175,6 +184,7 @@ bool Grippers_loop()
     delay(400);
     bottleCount++;
     currentArm = (currentArm + 1) % NUM_ARMS;
+    lastRejected = false;
     gripperState = GRAB;
     return true; // one full cycle done
 
@@ -185,6 +195,7 @@ bool Grippers_loop()
     closeClaw(currentArm);
     turretRotate(-90.0f);
     currentArm = (currentArm + 1) % NUM_ARMS;
+    lastRejected = true;
     gripperState = GRAB;
     return true;
   }

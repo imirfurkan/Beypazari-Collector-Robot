@@ -1,21 +1,12 @@
 #include <NewPing.h>
 #include "BottleSeeker.h"
 #include "motors.h"
-
-// ────────────────────────────────────────────────
-//  Pin map (Mega) for HC-SR04 sensors
-// ────────────────────────────────────────────────
-static constexpr int TRIG_LEFT = 35;
-static constexpr int ECHO_LEFT = 36;
-static constexpr int TRIG_MIDDLE = 33;
-static constexpr int ECHO_MIDDLE = 34;
-static constexpr int TRIG_RIGHT = 31;
-static constexpr int ECHO_RIGHT = 32;
+#include "ultrasonic.h"
 
 // ────────────────────────────────────────────────
 //  Behaviour parameters
 // ────────────────────────────────────────────────
-// static constexpr unsigned int DIST_THRESHOLD // check the header file
+// static constexpr unsigned int SEEKER_THRESHOLD // check the header file
 static constexpr unsigned int GRIPPER_THRESHOLD = 20; // cm
 static constexpr unsigned int ROTATE_EXTRA_MS = 2000; // ms
 static constexpr uint8_t FALLBACK_DEBOUNCE = 4;
@@ -30,9 +21,9 @@ static int8_t rotDir = 0;         //  ‑1 = CCW , +1 = CW
 static unsigned long rotEnd = 0;  // millis() deadline
 static uint8_t fallbackCount = 0; // require 5 consecutive “no‐sonar” passes
 
-static NewPing sonarL(TRIG_LEFT, ECHO_LEFT, DIST_THRESHOLD);
-static NewPing sonarM(TRIG_MIDDLE, ECHO_MIDDLE, DIST_THRESHOLD);
-static NewPing sonarR(TRIG_RIGHT, ECHO_RIGHT, DIST_THRESHOLD);
+static NewPing sonarL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD);
+static NewPing sonarM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD);
+static NewPing sonarR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD);
 
 enum BottleSeekerState
 {
@@ -68,9 +59,9 @@ bool BottleSeeker_loop()
   unsigned int dM = readDistance(sonarM);
   unsigned int dR = readDistance(sonarR);
 
-  bool objL = (dL < DIST_THRESHOLD);
-  bool objM = (dM < DIST_THRESHOLD);
-  bool objR = (dR < DIST_THRESHOLD);
+  bool objL = (dL < SEEKER_THRESHOLD);
+  bool objM = (dM < SEEKER_THRESHOLD);
+  bool objR = (dR < SEEKER_THRESHOLD);
   bool objAny = (objL || objM || objR);
   bool objGrip = (dM < GRIPPER_THRESHOLD);
 
@@ -82,7 +73,7 @@ bool BottleSeeker_loop()
     {
       Serial.println(F("SEARCH: driving forward"));
       Motor_driveForward();
-      delay(50);
+      delay(50); // TODO remove this?
       return false;
     }
     Serial.println(F("SEARCH: object detected -> APPROACH"));
