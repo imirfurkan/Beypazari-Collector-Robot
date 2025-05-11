@@ -18,9 +18,9 @@ static const uint8_t SWITCH_PIN = 7;      // cap‐present switch
 static bool lastRejected = false;
 
 // ── Angle presets ─────────────────────────────────────────
-static const uint8_t ELBOW_UP_ANGLE = 45;
-static const uint8_t ELBOW_DOWN_ANGLE = 110;
-static const uint8_t CLAW_OPEN_ANGLE = 30;
+static const uint8_t ELBOW_UP_ANGLE = 150;
+static const uint8_t ELBOW_DOWN_ANGLE = 180;
+static const uint8_t CLAW_OPEN_ANGLE = 40;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
 static const uint8_t CAP_UP_ANGLE = 30;   // TODO
 static const uint8_t CAP_DOWN_ANGLE = 70; // TODO
@@ -48,15 +48,17 @@ bool bottleRejected()
 }
 
 // ── Private helpers ────────────────────────────────────────
-static void enableStepper(uint8_t duty = 255)
+static void enableStepper()
 {
-  analogWrite(EN_PIN, duty);
+  digitalWrite(EN_PIN, LOW); // LOW = enabled (active-LOW)
   delay(10);
 }
+
 static void disableStepper()
 {
-  analogWrite(EN_PIN, 0);
+  digitalWrite(EN_PIN, HIGH); // HIGH = disabled
 }
+
 static void turretRotate(float angle)
 {
   enableStepper();
@@ -65,7 +67,7 @@ static void turretRotate(float angle)
   digitalWrite(DIR_PIN, directionCW ? HIGH : LOW);
   // convert angle to steps
   int steps = abs(int((angle * gearRatio / 360.0f) * STEPS_PER_REV));
-  digitalWrite(DIR_PIN, HIGH);
+  // digitalWrite(DIR_PIN, HIGH);
   for (int i = 0; i < steps; ++i)
   {
     digitalWrite(STEP_PIN, HIGH);
@@ -82,29 +84,29 @@ static void openClaw(uint8_t i)
 {
   clawSrv[i].attach(CLAW_PIN[i]);
   clawSrv[i].write(CLAW_OPEN_ANGLE);
-  delay(200);
-  clawSrv[i].detach();
+  delay(700);
+  // clawSrv[i].detach();
 }
 static void closeClaw(uint8_t i)
 {
   clawSrv[i].attach(CLAW_PIN[i]);
   clawSrv[i].write(CLAW_CLOSE_ANGLE);
-  delay(200);
+  delay(700);
   clawSrv[i].detach();
 }
 static void raiseElbow(uint8_t i)
 {
   elbowSrv[i].attach(ELBOW_PIN[i]);
   elbowSrv[i].write(ELBOW_UP_ANGLE);
-  delay(200);
+  delay(700);
   elbowSrv[i].detach();
 }
 static void lowerElbow(uint8_t i)
 {
   elbowSrv[i].attach(ELBOW_PIN[i]);
   elbowSrv[i].write(ELBOW_DOWN_ANGLE);
-  delay(200);
-  elbowSrv[i].detach();
+  delay(700);
+  // elbowSrv[i].detach();
 }
 static void setupServos()
 {
@@ -120,6 +122,7 @@ static void setupServos()
 static void setupStepper()
 {
   pinMode(EN_PIN, OUTPUT);
+  digitalWrite(EN_PIN, LOW); // ENABLE driver (LOW = enabled)
   pinMode(DIR_PIN, OUTPUT);
   pinMode(STEP_PIN, OUTPUT);
   digitalWrite(DIR_PIN, LOW);
@@ -141,6 +144,7 @@ bool Grippers_loop()
   case GRAB:
     turretRotate(90.0f); // rotate to grab
     openClaw(currentArm);
+    delay(600);
     lowerElbow(currentArm);
     delay(600);
 
