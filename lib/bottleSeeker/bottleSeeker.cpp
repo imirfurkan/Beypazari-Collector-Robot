@@ -8,10 +8,10 @@
 // ────────────────────────────────────────────────
 // static constexpr unsigned int SEEKER_THRESHOLD // check the header file
 static constexpr unsigned int GRIPPER_THRESHOLD = 20; // cm
-static constexpr unsigned int ROTATE_EXTRA_MS = 2000; // ms
+static constexpr unsigned int ROTATE_EXTRA_MS = 5000; // ms
 static constexpr uint8_t FALLBACK_DEBOUNCE = 4;
 static constexpr int BASE_SPEED_DEFAULT = 100;
-static constexpr int BASE_SPEED_TURNING = 40;
+static constexpr int BASE_SPEED_TURNING = 70;
 
 // ────────────────────────────────────────────────
 //  Internal state

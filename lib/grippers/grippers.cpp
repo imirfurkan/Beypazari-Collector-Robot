@@ -3,9 +3,9 @@
 
 // ── Hardware constants ──────────────────────────────────────
 static const int STEPS_PER_REV = 200; // 1.8° stepper
-static const uint8_t EN_PIN = 7;      // PWM – enable coils
-static const int DIR_PIN = 2;         // A4988 DIR
-static const int STEP_PIN = 3;        // A4988 STEP
+static const uint8_t EN_PIN = 11;      // PWM – enable coils
+static const int DIR_PIN = 12;         // A4988 DIR
+static const int STEP_PIN = 13;        // A4988 STEP
 static const float gearRatio = 225.0f / 90.0f;
 static const uint8_t NUM_ARMS = 2; // number of gripper arms
 

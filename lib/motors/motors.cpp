@@ -68,7 +68,7 @@ void Motor_driveForward()
 {
   for (uint8_t i = 0; i < 4; ++i)
   {
-    driveMotor(i, true);
+    driveMotor(i, false);
   }
 }
 
@@ -76,7 +76,7 @@ void Motor_driveBackward()
 {
   for (uint8_t i = 0; i < 4; ++i)
   {
-    driveMotor(i, false);
+    driveMotor(i, true);
   }
 }
 

@@ -1,16 +1,16 @@
 #pragma once
 #include <NewPing.h>
 
-static constexpr unsigned int SEEKER_THRESHOLD = 70; // cm, for bottle-seeker
-const unsigned int OBSTACLE_THRESHOLD = 20;          // cm, for obstacle‐avoid in LINE_SEARCH
+static constexpr unsigned int SEEKER_THRESHOLD = 50; // cm, for bottle-seeker
+const unsigned int OBSTACLE_THRESHOLD = 10;          // cm, for obstacle‐avoid in LINE_SEARCH
 
 /// HC‑SR04 trigger/echo pin mappings //TODO check the current pin mappings
-static constexpr int TRIG_LEFT = 30;
-static constexpr int ECHO_LEFT = 31;
-static constexpr int TRIG_MIDDLE = 32;
-static constexpr int ECHO_MIDDLE = 33;
-static constexpr int TRIG_RIGHT = 34;
-static constexpr int ECHO_RIGHT = 35;
+static constexpr int TRIG_LEFT = 48;
+static constexpr int ECHO_LEFT = 49;
+static constexpr int TRIG_MIDDLE = 44;
+static constexpr int ECHO_MIDDLE = 45;
+static constexpr int TRIG_RIGHT = 46;
+static constexpr int ECHO_RIGHT = 47;
 
 // ─────────────────────────────────────────────────────────
 //  Helper: read sonar and treat “0” as “far”
