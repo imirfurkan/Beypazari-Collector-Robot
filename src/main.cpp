@@ -14,7 +14,8 @@ enum RobotState
   SEEKING,
   GRIPPING,
   NAVIGATING,
-  INTERRUPT
+  INTERRUPT,
+  COMPLETED
 };
 static RobotState robotState = SEEKING;
 static RobotState previousState = SEEKING;
@@ -67,7 +68,10 @@ void loop()
         delay(1000);
         Motor_stopAll();
       }
-      robotState = NAVIGATING;
+      if (bottleCount == 2)
+        robotState = NAVIGATING;
+      else
+        robotState = SEEKING;
       enableTOFInterrupt();
     }
     break;
@@ -79,20 +83,40 @@ void loop()
       Motor_driveForward();
       delay(1000);
       Motor_stopAll();
-      robotState = SEEKING;
-      enableTOFInterrupt();
+
+      // Sequence for placing bottles
+      Grippers_lowerElbows(); // Lower both elbows
+      delay(700);
+
+      Grippers_openClaws(); // Open both claws
+      delay(700);
+
+      Grippers_raiseElbows(); // Raise both elbows
+      delay(700);
+
+      Grippers_closeClaws(); // Close both claws
+      delay(700);
+
+      bottleCount = 0; // Reset bottle count
+
+      Serial.println(F(">> Bottles placed successfully"));
+      robotState = COMPLETED;
     }
     break;
 
   case INTERRUPT:
-    Serial.println(F("🚧 Obstacle (<80 mm) detected! Avoiding..."));
+    Serial.println(F(" Wall (<80 mm) detected! Avoiding..."));
     Motor_rotateCW();
     delay(random(500, 701)); // tweak this for your turn angle
     Motor_stopAll();
     enableTOFInterrupt(); // re-arm the sensor ISR
     robotState = previousState;
     break;
-  }
 
+  case COMPLETED:
+    // Do nothing - robot stays in place
+    // Optionally blink an LED or do something to indicate completion
+    break;
+  }
   delay(10);
 }
