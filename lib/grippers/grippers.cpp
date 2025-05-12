@@ -3,7 +3,7 @@
 
 // ── Hardware constants ──────────────────────────────────────
 static const int STEPS_PER_REV = 200; // 1.8° stepper
-static const uint8_t EN_PIN = 6;      // PWM – enable coils
+static const uint8_t EN_PIN = 7;      // PWM – enable coils
 static const int DIR_PIN = 2;         // A4988 DIR
 static const int STEP_PIN = 3;        // A4988 STEP
 static const float gearRatio = 225.0f / 90.0f;
@@ -12,7 +12,7 @@ static const uint8_t NUM_ARMS = 2; // number of gripper arms
 static const uint8_t ELBOW_PIN[2] = {36, 38};
 static const uint8_t CLAW_PIN[2] = {37, 39};
 static const uint8_t CAP_PUSHER_PIN = 40; // microswitch actuator
-static const uint8_t SWITCH_PIN = 41;      // cap‐present switch
+static const uint8_t SWITCH_PIN = 41;     // cap‐present switch
 
 // ── Module‐local flag ───────────────────────────────────────
 static bool lastRejected = false;
@@ -36,16 +36,10 @@ enum GripperState
 };
 static GripperState gripperState = GRAB;
 static uint8_t currentArm = 0;
-static uint8_t bottleCount = 0;
+uint8_t bottleCount = 0;
 
 // ── Servo objects ──────────────────────────────────────────
 static Servo elbowSrv[2], clawSrv[2], capSrv;
-
-// ─ Public API ──────────────────────────────────────────────
-bool bottleRejected()
-{
-  return lastRejected;
-}
 
 // ── Private helpers ────────────────────────────────────────
 static void enableStepper()
@@ -62,8 +56,9 @@ static void disableStepper()
 static void turretRotate(float angle)
 {
   enableStepper();
-  // The current logic is set up correctly for arm 0, so invert direction for arm 1. 
-  if (currentArm == 1) {
+  // The current logic is set up correctly for arm 0, so invert direction for arm 1.
+  if (currentArm == 1)
+  {
     angle = -angle;
   }
   // CW for positive angles, CCW for negative
@@ -134,6 +129,44 @@ static void setupStepper()
 }
 
 // ── Public API ──────────────────────────────────────────────
+// ─ Public API ──────────────────────────────────────────────
+bool bottleRejected()
+{
+  return lastRejected;
+}
+
+void Grippers_openClaws()
+{
+  for (uint8_t i = 0; i < NUM_ARMS; ++i)
+  {
+    openClaw(i);
+  }
+}
+
+void Grippers_closeClaws()
+{
+  for (uint8_t i = 0; i < NUM_ARMS; ++i)
+  {
+    closeClaw(i);
+  }
+}
+
+void Grippers_lowerElbows()
+{
+  for (uint8_t i = 0; i < NUM_ARMS; ++i)
+  {
+    lowerElbow(i);
+  }
+}
+
+void Grippers_raiseElbows()
+{
+  for (uint8_t i = 0; i < NUM_ARMS; ++i)
+  {
+    raiseElbow(i);
+  }
+}
+
 void Grippers_setup()
 {
   pinMode(SWITCH_PIN, INPUT_PULLUP);
