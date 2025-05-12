@@ -19,9 +19,9 @@ static int8_t rotDir = 0;         //  ‑1 = CCW , +1 = CW
 static unsigned long rotEnd = 0;  // millis() deadline
 static uint8_t fallbackCount = 0; // require 5 consecutive “no‐sonar” passes
 
-static NewPing sonarL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD);
-static NewPing sonarM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD);
-static NewPing sonarR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD);
+static NewPing sonarL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD_SIDES);
+static NewPing sonarM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD_MIDDLE);
+static NewPing sonarR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD_SIDES);
 
 enum BottleSeekerState
 {
@@ -57,9 +57,9 @@ bool BottleSeeker_loop()
   unsigned int dM = readDistance(sonarM);
   unsigned int dR = readDistance(sonarR);
 
-  bool objL = (dL < SEEKER_THRESHOLD);
-  bool objM = (dM < SEEKER_THRESHOLD);
-  bool objR = (dR < SEEKER_THRESHOLD);
+  bool objL = (dL < SEEKER_THRESHOLD_SIDES);
+  bool objM = (dM < SEEKER_THRESHOLD_MIDDLE);
+  bool objR = (dR < SEEKER_THRESHOLD_SIDES);
   bool objAny = (objL || objM || objR);
   bool objGrip = (dM < GRIPPER_THRESHOLD);
 
