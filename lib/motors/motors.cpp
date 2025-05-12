@@ -125,3 +125,30 @@ void Motor_gentleRight()
     analogWrite(MOTOR_PWM_PIN[i], (i < 2) ? leftPWM : rightPWM);
   }
 }
+
+
+// // TEST CODE FOR MAIN.CPP
+
+// #include "motors.h"
+
+// // ── Setup: initialize pins and driver ──────────────────────
+// void setup() {
+//   Motor_setup();
+// }
+
+// // ── Main loop: forward → CW → CCW, each for 5 s ───────────
+// void loop() {
+//   // 1) Go straight ahead
+//   Motor_driveForward();
+//   delay(5000);  // 5000 ms = 5 s
+
+//   // 2) Spin in place clockwise
+//   Motor_rotateCW();
+//   delay(5000);
+
+//   // 3) Spin in place counter-clockwise
+//   Motor_rotateCCW();
+//   delay(5000);
+
+//   // then immediately repeats…
+// }
