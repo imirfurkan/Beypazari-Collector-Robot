@@ -7,9 +7,9 @@
 static constexpr int MOTOR_STBY_PIN = 30;
 
 // Motor driver pins: { back-left, front-left, front-right, back-right }
-static constexpr uint8_t MOTOR_PWM_PIN[4] = {3, 4, 5, 6};
-static constexpr uint8_t MOTOR_IN1_PIN[4] = {22, 24, 26, 28};
-static constexpr uint8_t MOTOR_IN2_PIN[4] = {23, 25, 27, 29};
+static constexpr uint8_t MOTOR_PWM_PIN[4] = {5, 6, 3, 4};
+static constexpr uint8_t MOTOR_IN1_PIN[4] = {26, 28, 22, 24};
+static constexpr uint8_t MOTOR_IN2_PIN[4] = {27, 29, 23, 25};
 
 // ── Calibration & defaults ────────────────────────────────
 // Per-motor “unloaded” scaling factors

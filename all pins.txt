@@ -10,6 +10,9 @@ static constexpr uint8_t MOTOR_PWM_PIN[4] = {3, 4, 5, 6};
 static constexpr uint8_t MOTOR_IN1_PIN[4] = {22, 24, 26, 28};
 static constexpr uint8_t MOTOR_IN2_PIN[4] = {23, 25, 27, 29};
 
+new motors in1 {26, 28, 22, 24}
+new motors in2 {27, 29, 23, 25}
+
 static constexpr int TRIG_LEFT = 48;
 static constexpr int ECHO_LEFT = 49;
 static constexpr int TRIG_MIDDLE = 50;
@@ -17,8 +20,9 @@ static constexpr int ECHO_MIDDLE = 51;
 static constexpr int TRIG_RIGHT = 52;
 static constexpr int ECHO_RIGHT = 53;
 
-a4988 step 42
-a4988 dir 43
+a4988 step 13
+a4988 dir 12
+enablePin = 11 A4988 EN pin (active LOW)
 
 vl53l0x gpio1 2
 vl53l0x shutdown 9
