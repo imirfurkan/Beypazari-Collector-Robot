@@ -8,20 +8,6 @@ const int stepsPerRevolution = 200;
 const float gearRatio = 225.0 / 90.0;
 const float desiredAngle = 90.0;
 
-void setup()
-{
-  // in setup(), before anything else:
-  pinMode(enablePin, OUTPUT);
-  digitalWrite(enablePin, LOW); // ENABLE driver (LOW = enabled)
-  pinMode(dirPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
-}
-
-void loop()
-{
-  rotateAngle(desiredAngle);
-  delay(2000);
-}
 
 void rotateAngle(float desiredAngle)
 {
@@ -42,6 +28,22 @@ void rotateAngle(float desiredAngle)
     delay(5);
   }
 }
+
+void setup()
+{
+  // in setup(), before anything else:
+  pinMode(enablePin, OUTPUT);
+  digitalWrite(enablePin, LOW); // ENABLE driver (LOW = enabled)
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+}
+
+void loop()
+{
+  rotateAngle(desiredAngle);
+  delay(2000);
+}
+
 
 ///////////// or try this
 
