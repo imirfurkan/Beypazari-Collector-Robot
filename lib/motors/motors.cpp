@@ -3,6 +3,18 @@
 
 // ── Internal state ────────────────────────────────────────
 static int s_baseSpeed = MOTOR_SPEED_DEFAULT;
+static bool stbyEnabled = false; // Track standby pin enable state
+
+// Ensure the TB6612 driver is enabled before any motor operation
+static inline void ensureEnabled()
+{
+  if (!stbyEnabled)
+  {
+    digitalWrite(MOTOR_STBY_PIN, HIGH);
+    delayMicroseconds(10); // Small delay to ensure driver is ready
+    stbyEnabled = true;
+  }
+}
 
 // Compute the PWM for motor `idx` after applying its unloaded factor
 static int trimmedPWM(uint8_t idx)
@@ -13,6 +25,8 @@ static int trimmedPWM(uint8_t idx)
 // Low-level: drive a single motor idx either forward or reverse
 static void driveMotor(uint8_t idx, bool forward)
 {
+  ensureEnabled(); // Make sure driver is enabled before sending commands
+
   digitalWrite(MOTOR_IN1_PIN[idx], forward ? HIGH : LOW);
   digitalWrite(MOTOR_IN2_PIN[idx], forward ? LOW : HIGH);
   analogWrite(MOTOR_PWM_PIN[idx], trimmedPWM(idx));
@@ -39,12 +53,15 @@ void Motor_setBaseSpeed(int speed) // TODO
   s_baseSpeed = constrain(speed, 0, 255);
 }
 
-void Motor_stopAll() // TODO STBY kapamalı yap
+void Motor_stopAll() // also disables STBY
 {
   for (uint8_t i = 0; i < 4; ++i)
   {
     analogWrite(MOTOR_PWM_PIN[i], 0);
   }
+
+  digitalWrite(MOTOR_STBY_PIN, LOW);
+  stbyEnabled = false;
 }
 
 void Motor_driveForward()
