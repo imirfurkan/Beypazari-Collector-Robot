@@ -148,3 +148,50 @@
 //   // then immediately repeats…
 // }
 
+
+// stepper test
+#include <Arduino.h>
+// pin connections
+const int dirPin = 2;
+const int stepPin = 3;
+const int enablePin = 6; // A4988 EN pin (active LOW)
+
+const int stepsPerRevolution = 200;
+const float gearRatio = 225.0 / 90.0;
+const float desiredAngle = 90.0;
+
+
+void rotateAngle(float desiredAngle)
+{
+  // 1) compute equivalent small-gear angle
+  float smallGearAngle = desiredAngle * gearRatio;
+
+  // 2) convert to motor steps
+  int stepsToMove = int((smallGearAngle / 360.0) * stepsPerRevolution);
+
+  // 3) rotate motor
+  digitalWrite(dirPin, HIGH); // HIGH = CW, LOW = CCW
+  for (int i = 0; i < stepsToMove; i++)
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(5000);
+    digitalWrite(stepPin, LOW);
+    // rpm
+    delay(5);
+  }
+}
+
+void setup()
+{
+  // in setup(), before anything else:
+  pinMode(enablePin, OUTPUT);
+  digitalWrite(enablePin, LOW); // ENABLE driver (LOW = enabled)
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+}
+
+void loop()
+{
+  rotateAngle(desiredAngle);
+  delay(2000);
+}
