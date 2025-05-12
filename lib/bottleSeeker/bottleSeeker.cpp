@@ -71,7 +71,8 @@ bool BottleSeeker_loop()
     {
       Serial.println(F("SEARCH: driving forward"));
       Motor_driveForward();
-      delay(50); // TODO remove this?
+      // delay(50); // TODO remove this?
+      // removing this delay so the ultrasonic sensors can be read more frequently
       return false;
     }
     Serial.println(F("SEARCH: object detected -> APPROACH"));
