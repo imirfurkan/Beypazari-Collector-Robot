@@ -2,7 +2,8 @@
 #include <NewPing.h>
 
 static constexpr unsigned int SEEKER_THRESHOLD = 50; // cm, for bottle-seeker
-const unsigned int OBSTACLE_THRESHOLD = 10;          // cm, for obstacle‐avoid in LINE_SEARCH
+static constexpr unsigned int GRIPPER_THRESHOLD = 20; // cm, for bottle-seeker to stop
+static constexpr unsigned int OBSTACLE_THRESHOLD = 10;          // cm, for obstacle‐avoid in LINE_SEARCH
 
 /// HC‑SR04 trigger/echo pin mappings //TODO check the current pin mappings
 static constexpr int TRIG_LEFT = 48;
