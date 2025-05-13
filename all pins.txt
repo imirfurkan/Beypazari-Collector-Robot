@@ -15,10 +15,10 @@ new motors in2 {27, 29, 23, 25}
 
 static constexpr int TRIG_LEFT = 48;
 static constexpr int ECHO_LEFT = 49;
-static constexpr int TRIG_MIDDLE = 50;
-static constexpr int ECHO_MIDDLE = 51;
-static constexpr int TRIG_RIGHT = 52;
-static constexpr int ECHO_RIGHT = 53;
+static constexpr int TRIG_MIDDLE = 44;
+static constexpr int ECHO_MIDDLE = 45;
+static constexpr int TRIG_RIGHT = 46;
+static constexpr int ECHO_RIGHT = 47;
 
 a4988 step 13
 a4988 dir 12
