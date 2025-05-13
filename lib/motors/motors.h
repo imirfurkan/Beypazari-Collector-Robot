@@ -17,7 +17,7 @@ static constexpr float MOTOR_K_UNLOADED[4] = {0.974f, 0.808f, 0.835f, 0.750f};
 static constexpr bool MOTOR_FORWARD_DIR = true;
 static constexpr int MOTOR_SPEED_DEFAULT = 150; // PWM 0-255
 static constexpr int MOTOR_PIVOT_SPEED = 50;
-static constexpr int MOTOR_GENTLE_SPEED = 80;
+static constexpr int MOTOR_GENTLE_SPEED = 120;
 static constexpr float MOTOR_STEER_PCT = 0.5f; // 0.0 = hard turn, 1.0 = straight
 
 static uint8_t lastBaseSpeed = 0xFF; // impossible initial value

@@ -8,8 +8,8 @@
 // ────────────────────────────────────────────────
 static constexpr unsigned int ROTATE_EXTRA_MS = 5000; // ms
 static constexpr uint8_t FALLBACK_DEBOUNCE = 4;
-static constexpr int BASE_SPEED_DEFAULT = 100;
-static constexpr int BASE_SPEED_TURNING = 70;
+// static constexpr int MOTOR_SPEED_DEFAULT = 100;
+static constexpr int BASE_SPEED_TURNING = 105;
 
 // ────────────────────────────────────────────────
 //  Internal state
@@ -37,7 +37,7 @@ void BottleSeeker_setup()
 {
   // motor module handles TB6612 pins & standby
   Motor_setup();
-  Motor_setBaseSpeed(BASE_SPEED_DEFAULT);
+  Motor_setBaseSpeed(MOTOR_SPEED_DEFAULT);
 
   // ultrasonic sensor pins
   pinMode(TRIG_LEFT, OUTPUT);
@@ -110,7 +110,7 @@ bool BottleSeeker_loop()
     if (!objL && objM && !objR)
     {
       fallbackCount = 0;
-      ensureMotorSpeed(BASE_SPEED_DEFAULT);
+      ensureMotorSpeed(MOTOR_SPEED_DEFAULT);
       Serial.println(F("APPROACH: centre -> forward"));
       Motor_driveForward();
       return false;
@@ -143,7 +143,7 @@ bool BottleSeeker_loop()
     else if ((objL && !objM && objR) || (objL && objM && objR))
     {
       fallbackCount = 0;
-      ensureMotorSpeed(BASE_SPEED_DEFAULT);
+      ensureMotorSpeed(MOTOR_SPEED_DEFAULT);
       Serial.println(F("APPROACH: both-sides → driveForward"));
       Motor_driveForward();
       return false;
@@ -176,9 +176,9 @@ bool BottleSeeker_loop()
     bool centered = objM;
     if (centered || millis() >= rotEnd)
     {
-      delay(100); // turn a little bit longer after the middle sensor is activated
+      delay(200); // turn a little bit longer after the middle sensor is activated
       currentState = APPROACH;
-      ensureMotorSpeed(BASE_SPEED_DEFAULT);
+      ensureMotorSpeed(MOTOR_SPEED_DEFAULT);
       Motor_stopAll();
       Serial.println(centered ? F("APPROACH: aligned -> forward")
                               : F("APPROACH: timeout -> fallback"));

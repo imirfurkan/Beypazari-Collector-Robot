@@ -147,66 +147,66 @@
 //   // then immediately repeats…
 // }
 
-// #include <Arduino.h>
-// #include "Grippers.h"
-
-// void setup()
-// {
-//   // start serial for debug (optional)
-//   Serial.begin(9600);
-//   while (!Serial)
-//   { /* wait for Serial on some boards */
-//   }
-
-//   // initialize gripper hardware and state
-//   Grippers_setup();
-// }
-
-// void loop()
-// {
-//   // call the gripper state-machine; if it's still mid-cycle, bail out immediately
-//   if (!Grippers_loop())
-//   {
-//     return;
-//   }
-
-//   // ← here only when Grippers_loop() has returned true
-//   Serial.println(F("Gripper cycle complete!"));
-// }
-
-// test code
 #include <Arduino.h>
-#include "BottleSeeker.h"
-#include "motors.h"
+#include "Grippers.h"
 
 void setup()
 {
-  Serial.begin(115200);
+  // start serial for debug (optional)
+  Serial.begin(9600);
   while (!Serial)
-  { /* wait for Serial */
+  { /* wait for Serial on some boards */
   }
 
-  BottleSeeker_setup();
-  Serial.println(F("== BottleSeeker TEST START =="));
+  // initialize gripper hardware and state
+  Grippers_setup();
 }
 
 void loop()
 {
-  // Run one iteration of the FSM
-  bool found = BottleSeeker_loop();
-
-  if (found)
+  // call the gripper state-machine; if it's still mid-cycle, bail out immediately
+  if (!Grippers_loop())
   {
-    Serial.println(F(">>> BOTTLE IN GRIP RANGE!"));
-
-    // Hold here until the seeker resets back to SEARCH
-    while (BottleSeeker_loop())
-    {
-      delay(10);
-    }
-    Serial.println(F("-- seeker reset to SEARCH --"));
+    return;
   }
 
-  // Small delay to avoid flooding the Serial output
-  delay(10);
+  // ← here only when Grippers_loop() has returned true
+  Serial.println(F("Gripper cycle complete!"));
 }
+
+// // test code bottle seeker
+// #include <Arduino.h>
+// #include "BottleSeeker.h"
+// #include "motors.h"
+
+// void setup()
+// {
+//   Serial.begin(115200);
+//   while (!Serial)
+//   { /* wait for Serial */
+//   }
+
+//   BottleSeeker_setup();
+//   Serial.println(F("== BottleSeeker TEST START =="));
+// }
+
+// void loop()
+// {
+//   // Run one iteration of the FSM
+//   bool found = BottleSeeker_loop();
+
+//   if (found)
+//   {
+//     Serial.println(F(">>> BOTTLE IN GRIP RANGE!"));
+
+//     // Hold here until the seeker resets back to SEARCH
+//     while (BottleSeeker_loop())
+//     {
+//       delay(10);
+//     }
+//     Serial.println(F("-- seeker reset to SEARCH --"));
+//   }
+
+//   // Small delay to avoid flooding the Serial output
+//   delay(10);
+// }
