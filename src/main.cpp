@@ -121,7 +121,6 @@
 //   delay(10);
 // }
 
-
 // MOTOR TEST CODE FOR MAIN.CPP
 
 // #include "motors.h"
@@ -180,23 +179,29 @@
 #include "BottleSeeker.h"
 #include "motors.h"
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  while (!Serial) { /* wait for Serial */ }
+  while (!Serial)
+  { /* wait for Serial */
+  }
 
   BottleSeeker_setup();
   Serial.println(F("== BottleSeeker TEST START =="));
 }
 
-void loop() {
+void loop()
+{
   // Run one iteration of the FSM
   bool found = BottleSeeker_loop();
 
-  if (found) {
+  if (found)
+  {
     Serial.println(F(">>> BOTTLE IN GRIP RANGE!"));
 
     // Hold here until the seeker resets back to SEARCH
-    while (BottleSeeker_loop()) {
+    while (BottleSeeker_loop())
+    {
       delay(10);
     }
     Serial.println(F("-- seeker reset to SEARCH --"));
