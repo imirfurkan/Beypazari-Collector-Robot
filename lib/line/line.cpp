@@ -24,7 +24,7 @@ static constexpr unsigned long OBS_DT = 50; // ms
 // Line-search timing
 static constexpr unsigned long BLAST_MS = 500;        // after center hit
 static constexpr unsigned long CORNER_BLAST_MS = 300; // prep before pivot
-static constexpr unsigned long PIVOT_MS = 1000;       // max pivot time
+static constexpr unsigned long PIVOT_MS = 3000;       // max pivot time
 
 // ── FSM States ─────────────────────────────────────────
 enum LineState
@@ -66,10 +66,10 @@ static unsigned long hardRightStamp = 0;
 // ────────────────────────────────────────────────
 void updateObstacleAvoid()
 {
-  if (lineState != LINE_SEARCH)
+  if (lineState != LINE_SEARCH) // works only in line search
     return;
   unsigned long now = millis();
-  if (now - lastObsChk < OBS_DT)
+  if (now - lastObsChk < OBS_DT) // check every OBS_DT ms
     return;
   lastObsChk = now;
 
@@ -92,7 +92,7 @@ void updateObstacleAvoid()
 
   if (!oaActive && !tooClose)
     return;
-  if (!oaActive)
+  if (!oaActive) // it is tooClose, activate OA
   {
     oaActive = true;
     Motor_stopAll();
@@ -118,6 +118,7 @@ void Line_setup()
   Serial.begin(115200);
   Motor_setup();
   // IR sensor pins
+  pinMode(L0, INPUT);
   pinMode(L1, INPUT);
   pinMode(L2, INPUT);
   pinMode(L3, INPUT);
@@ -159,6 +160,7 @@ bool Line_loop()
       }
     }
     // read all 5 IR sensors
+    bool s0 = analogRead(L0) / 1023.0 < IR_THRESHOLD;
     bool s1 = analogRead(L1) / 1023.0 < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0 < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
@@ -170,20 +172,27 @@ bool Line_loop()
     case LS_ROLL:
       Serial.println("LS_ROLL");
       Motor_driveForward();
-      if (s1 || s2 || s3 || s4 || s5)
+      if (s0)
       {
-        // record which side saw black first and assign directions
-        if (s1 || s2)
-          lsDirection = -1;
-        else if (s4 || s5)
-          lsDirection = +1;
-        else
-          lsDirection = -1;
         lsStamp = now;
-        lsState = LS_BLAST;
+        lsState = LS_PIVOT;
         tapeFound = true;
         oaActive = false; // just in case
       }
+      // if (s1 || s2 || s3 || s4 || s5)
+      // {
+      //   // record which side saw black first and assign directions
+      //   if (s1 || s2)
+      //     lsDirection = -1;
+      //   else if (s4 || s5)
+      //     lsDirection = +1;
+      //   else
+      //     lsDirection = -1;
+      //   lsStamp = now;
+      //   lsState = LS_BLAST;
+      //   tapeFound = true;
+      //   oaActive = false; // just in case
+      // }
       break;
 
     case LS_BLAST:
@@ -224,10 +233,11 @@ bool Line_loop()
         pivotStarted = true;
         Motor_setBaseSpeed(MOTOR_PIVOT_SPEED); // slow down the speed for the pivot
         lsStamp = now;                         // start timing here
-        if (lsDirection < 0)
-          Motor_rotateCW();
-        else
-          Motor_rotateCCW();
+        // if (lsDirection < 0)
+        //   Motor_rotateCW();
+        // else
+        //   Motor_rotateCCW();
+        Motor_rotateCW();
       }
 
       bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
@@ -237,7 +247,7 @@ bool Line_loop()
       {
         Motor_stopAll();
         Motor_setBaseSpeed(MOTOR_SPEED_DEFAULT); // return false to the normal speed for line follow
-        Motor_driveForward();
+        Motor_driveBackward();
         lineState = LINE_FOLLOW;
       }
       break;
@@ -276,7 +286,7 @@ bool Line_loop()
           hardLeftStamp = now;
         if (now - hardLeftStamp < CORNER_BLAST_MS)
         {
-          Motor_driveForward();
+          Motor_driveBackward();
         }
         else
         {
@@ -294,14 +304,14 @@ bool Line_loop()
         {
           Motor_stopAll();
           delay(50);
-          Motor_driveForward();
+          Motor_driveBackward();
           hardLeftActive = false;
           hardLeftPhase2 = false;
           hardLeftStamp = 0;
         }
         else
         {
-          Motor_rotateCCW(); // rotate until centered
+          Motor_rotateCW(); // rotate until centered
         }
       }
       return false;
@@ -316,7 +326,7 @@ bool Line_loop()
           hardRightStamp = now;
         if (now - hardRightStamp < CORNER_BLAST_MS)
         {
-          Motor_driveForward();
+          Motor_driveBackward();
         }
         else
         {
@@ -334,14 +344,14 @@ bool Line_loop()
         {
           Motor_stopAll();
           delay(50);
-          Motor_driveForward();
+          Motor_driveBackward();
           hardRightActive = false;
           hardRightPhase2 = false;
           hardRightStamp = 0;
         }
         else
         {
-          Motor_rotateCW();
+          Motor_rotateCCW(); // Motor_rotateCW();
         }
       }
       return false;
@@ -354,7 +364,7 @@ bool Line_loop()
       hardLeftActive = true;
       hardLeftPhase2 = false;
       hardLeftStamp = now;
-      Motor_driveForward();
+      Motor_driveBackward();
       return false;
     }
     // — detect fresh hard‐right entry —
@@ -364,22 +374,22 @@ bool Line_loop()
       hardRightActive = true;
       hardRightPhase2 = false;
       hardRightStamp = now;
-      Motor_driveForward();
+      Motor_driveBackward();
       return false;
     }
     // — gentle steering corrections —
     else if (!s1 && s2)
     {
-      Motor_gentleLeft();
+      Motor_gentleRight(); // Motor_gentleLeft();
     }
     else if (s4 && !s5)
     {
-      Motor_gentleRight();
+      Motor_gentleLeft(); // Motor_gentleRight();
     }
     // — default: straight ahead —
     else
     {
-      Motor_driveForward();
+      Motor_driveForward(); // TODO
     }
 
     delay(20);
