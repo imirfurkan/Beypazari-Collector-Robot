@@ -3,9 +3,9 @@
 
 // ── Hardware constants ──────────────────────────────────────
 static const int STEPS_PER_REV = 200; // 1.8° stepper
-static const uint8_t EN_PIN = 11;      // PWM – enable coils
-static const int DIR_PIN = 12;         // A4988 DIR
-static const int STEP_PIN = 13;        // A4988 STEP
+static const uint8_t EN_PIN = 11;     // PWM – enable coils
+static const int DIR_PIN = 12;        // A4988 DIR
+static const int STEP_PIN = 13;       // A4988 STEP
 static const float gearRatio = 225.0f / 90.0f;
 static const uint8_t NUM_ARMS = 2; // number of gripper arms
 
@@ -188,7 +188,7 @@ bool Grippers_loop()
     closeClaw(currentArm);
     delay(600);
     gripperState = TEST_CAP;
-    break;
+    return false;
 
   case TEST_CAP:
   {
@@ -209,17 +209,15 @@ bool Grippers_loop()
     {
       gripperState = STORE;
     }
-    break;
+    return false;
   }
 
   case STORE:
-    // TODO halfway lift
-    turretRotate(30.0f);
     raiseElbow(currentArm);
     delay(400);
-    turretRotate(60.0f);
+    turretRotate(-90.0f);
     gripperState = RESET_ARM;
-    break;
+    return false;
 
   case RESET_ARM:
     delay(400);

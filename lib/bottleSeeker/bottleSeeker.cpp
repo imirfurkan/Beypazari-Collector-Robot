@@ -6,8 +6,6 @@
 // ────────────────────────────────────────────────
 //  Behaviour parameters
 // ────────────────────────────────────────────────
-// static constexpr unsigned int SEEKER_THRESHOLD // check the header file
-static constexpr unsigned int GRIPPER_THRESHOLD = 20; // cm
 static constexpr unsigned int ROTATE_EXTRA_MS = 5000; // ms
 static constexpr uint8_t FALLBACK_DEBOUNCE = 4;
 static constexpr int BASE_SPEED_DEFAULT = 100;
@@ -16,19 +14,19 @@ static constexpr int BASE_SPEED_TURNING = 70;
 // ────────────────────────────────────────────────
 //  Internal state
 // ────────────────────────────────────────────────
-static bool rotating = false;     // are we inside that window?
 static int8_t rotDir = 0;         //  ‑1 = CCW , +1 = CW
 static unsigned long rotEnd = 0;  // millis() deadline
 static uint8_t fallbackCount = 0; // require 5 consecutive “no‐sonar” passes
 
-static NewPing sonarL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD);
-static NewPing sonarM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD);
-static NewPing sonarR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD);
+static NewPing sonarL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD_SIDES);
+static NewPing sonarM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD_MIDDLE);
+static NewPing sonarR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD_SIDES);
 
 enum BottleSeekerState
 {
   SEARCH,
-  APPROACH
+  APPROACH,
+  ROTATING
 };
 static BottleSeekerState currentState = SEARCH;
 
@@ -55,25 +53,34 @@ void BottleSeeker_setup()
 // ────────────────────────────────────────────────
 bool BottleSeeker_loop()
 {
-  unsigned int dL = readDistance(sonarL);
-  unsigned int dM = readDistance(sonarM);
-  unsigned int dR = readDistance(sonarR);
+  // Declare variables at the beginning, before switch statement
+  unsigned int dM, dL, dR;
+  bool objM, objL, objR, objGrip, objAny;
 
-  bool objL = (dL < SEEKER_THRESHOLD);
-  bool objM = (dM < SEEKER_THRESHOLD);
-  bool objR = (dR < SEEKER_THRESHOLD);
-  bool objAny = (objL || objM || objR);
-  bool objGrip = (dM < GRIPPER_THRESHOLD);
+  // ────────────────────────────────────────────────
+  //  1) Always read middle first (you need it in every state)
+  // ────────────────────────────────────────────────
+  dM = readDistance(sonarM);
+  objM = (dM < SEEKER_THRESHOLD_MIDDLE);
+  objGrip = (dM < GRIPPER_THRESHOLD);
 
   switch (currentState)
   {
 
   case SEARCH:
+
+    dL = readDistance(sonarL);
+    dR = readDistance(sonarR);
+    objL = (dL < SEEKER_THRESHOLD_SIDES);
+    objR = (dR < SEEKER_THRESHOLD_SIDES);
+    objAny = (objL || objM || objR);
+
     if (!objAny)
     {
       Serial.println(F("SEARCH: driving forward"));
       Motor_driveForward();
-      delay(50); // TODO remove this?
+      // delay(50); // TODO remove this?
+      // removing this delay so the ultrasonic sensors can be read more frequently
       return false;
     }
     Serial.println(F("SEARCH: object detected -> APPROACH"));
@@ -81,6 +88,13 @@ bool BottleSeeker_loop()
     break;
 
   case APPROACH:
+
+    dL = readDistance(sonarL);
+    dR = readDistance(sonarR);
+    objL = (dL < SEEKER_THRESHOLD_SIDES);
+    objR = (dR < SEEKER_THRESHOLD_SIDES);
+    objAny = (objL || objM || objR);
+
     // within grip range?
     if (objGrip)
     {
@@ -91,35 +105,7 @@ bool BottleSeeker_loop()
       return true;
     }
 
-    // continue timed rotation
-    if (rotating)
-    {
-      fallbackCount = 0;
-      Serial.println(F("APPROACH: still rotating…"));
-      if (rotDir < 0)
-        Motor_rotateCCW();
-      else
-        Motor_rotateCW();
-      bool centered = objM;
-      if (centered || millis() >= rotEnd)
-      {
-        delay(500); // turn a little bit longer after the middle sensor is activated
-        rotating = false;
-        ensureMotorSpeed(BASE_SPEED_DEFAULT);
-        Motor_stopAll();
-        Serial.println(centered ? F("APPROACH: aligned -> forward")
-                                : F("APPROACH: timeout -> fallback"));
-        if (centered)
-        {
-          Motor_driveForward();
-          // delay(200); // TODO remove this?
-        }
-      }
-      return false;
-    }
-
     // ── normal steering logic ──
-
     // Only-middle sees → drive straight
     if (!objL && objM && !objR)
     {
@@ -135,7 +121,7 @@ bool BottleSeeker_loop()
       fallbackCount = 0;
       ensureMotorSpeed(BASE_SPEED_TURNING);
       rotDir = -1;
-      rotating = true; // <— THIS makes the top if(rotating) run next loop
+      currentState = ROTATING; // <— THIS makes the top if(rotating) run next loop
       rotEnd = millis() + ROTATE_EXTRA_MS;
       Serial.println(F("APPROACH: start CCW"));
       Motor_rotateCCW();
@@ -147,7 +133,7 @@ bool BottleSeeker_loop()
       fallbackCount = 0;
       ensureMotorSpeed(BASE_SPEED_TURNING);
       rotDir = +1;
-      rotating = true; // <— THIS makes the top if(rotating) run next loop
+      currentState = ROTATING; // <— THIS makes the top if(rotating) run next loop
       rotEnd = millis() + ROTATE_EXTRA_MS;
       Serial.println(F("APPROACH: start CW"));
       Motor_rotateCW();
@@ -178,6 +164,32 @@ bool BottleSeeker_loop()
       }
       return false;
     }
+
+  case ROTATING:
+    // continue timed rotation
+    fallbackCount = 0;
+    Serial.println(F("APPROACH: still rotating…"));
+    if (rotDir < 0)
+      Motor_rotateCCW();
+    else
+      Motor_rotateCW();
+    bool centered = objM;
+    if (centered || millis() >= rotEnd)
+    {
+      delay(100); // turn a little bit longer after the middle sensor is activated
+      currentState = APPROACH;
+      ensureMotorSpeed(BASE_SPEED_DEFAULT);
+      Motor_stopAll();
+      Serial.println(centered ? F("APPROACH: aligned -> forward")
+                              : F("APPROACH: timeout -> fallback"));
+      if (centered)
+      {
+        Motor_driveForward();
+        // delay(200); // TODO remove this?
+      }
+    }
+    return false;
+
   } // end of switch
 
   return false;
