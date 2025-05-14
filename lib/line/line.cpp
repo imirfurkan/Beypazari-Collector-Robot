@@ -22,7 +22,7 @@ static constexpr float IR_THRESHOLD = 0.15f;
 static constexpr unsigned long OBS_DT = 50; // ms
 
 // Line-search timing
-static constexpr unsigned long BLAST_MS = 500;        // after center hit
+static constexpr unsigned long BLAST_MS = 1500;       // after center hit
 static constexpr unsigned long CORNER_BLAST_MS = 300; // prep before pivot
 static constexpr unsigned long PIVOT_MS = 3000;       // max pivot time
 
@@ -160,12 +160,12 @@ bool Line_loop()
       }
     }
     // read all 5 IR sensors
-    bool s0 = analogRead(L0) / 1023.0 < IR_THRESHOLD;
-    bool s1 = analogRead(L1) / 1023.0 < IR_THRESHOLD;
-    bool s2 = analogRead(L2) / 1023.0 < IR_THRESHOLD;
-    bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
-    bool s4 = analogRead(L4) / 1023.0 < IR_THRESHOLD;
-    bool s5 = analogRead(L5) / 1023.0 < IR_THRESHOLD;
+    bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
+    bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
+    bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
+    bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
+    bool s4 = analogRead(L4) / 1023.0f < IR_THRESHOLD;
+    bool s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
 
     switch (lsState)
     {
@@ -262,6 +262,7 @@ bool Line_loop()
   if (lineState == LINE_FOLLOW)
   {
     // sample & normalize sensors
+    bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
@@ -269,7 +270,7 @@ bool Line_loop()
     bool s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
 
     // target‐area detection: no sensor sees the line → lost it
-    if (!(s1 || s2 || s3 || s4 || s5))
+    if (!(s0 || s1 || s2 || s3 || s4 || s5))
     {
       // reset for next SEARCH if you want
       lineState = LINE_SEARCH;
@@ -300,9 +301,9 @@ bool Line_loop()
       }
       else // Phase 2: turning
       {
-        bool _s1 = analogRead(L1) / 1023.0 < IR_THRESHOLD;
-        bool _s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
-        bool _s5 = analogRead(L5) / 1023.0 < IR_THRESHOLD;
+        bool _s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
+        bool _s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
+        bool _s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
         if (!_s1 && _s3 && !_s5) // if we have centered the line
         {
           Motor_stopAll();
@@ -340,9 +341,9 @@ bool Line_loop()
       }
       else
       {
-        bool _s1 = analogRead(L1) / 1023.0 < IR_THRESHOLD;
-        bool _s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
-        bool _s5 = analogRead(L5) / 1023.0 < IR_THRESHOLD;
+        bool _s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
+        bool _s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
+        bool _s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
         if (!_s5 && _s3 && !_s1)
         {
           Motor_stopAll();
