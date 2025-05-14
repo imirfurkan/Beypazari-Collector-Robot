@@ -24,7 +24,7 @@ static constexpr unsigned long OBS_DT = 50; // ms
 // Line-search timing
 static constexpr unsigned long BLAST_MS = 700;            // after center hit
 static constexpr unsigned long MAX_CORNER_BLAST_MS = 200; // prep before pivot
-static constexpr unsigned long PIVOT_MS = 8000;           // max pivot time
+static constexpr unsigned long PIVOT_MS = 4000;           // max pivot time
 
 // ── FSM States ─────────────────────────────────────────
 enum LineState
