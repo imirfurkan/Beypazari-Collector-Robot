@@ -18,12 +18,13 @@ static const uint8_t SWITCH_PIN = 41;     // cap‐present switch
 static bool lastRejected = false;
 
 // ── Angle presets ─────────────────────────────────────────
-static const uint8_t ELBOW_UP_ANGLE = 150;
+static const uint8_t ELBOW_UP_ANGLE = 140;
 static const uint8_t ELBOW_DOWN_ANGLE = 180;
-static const uint8_t CLAW_OPEN_ANGLE = 40;
+static const uint8_t CLAW_OPEN_ANGLE = 30;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
 static const uint8_t CAP_UP_ANGLE = 30;   // TODO
 static const uint8_t CAP_DOWN_ANGLE = 70; // TODO
+static const uint8_t desiredAngle = 93.0f;
 
 // ── Module state ───────────────────────────────────────────
 enum GripperState
@@ -91,14 +92,14 @@ static void closeClaw(uint8_t i)
   clawSrv[i].attach(CLAW_PIN[i]);
   clawSrv[i].write(CLAW_CLOSE_ANGLE);
   delay(700);
-  clawSrv[i].detach();
+  // clawSrv[i].detach();
 }
 static void raiseElbow(uint8_t i)
 {
   elbowSrv[i].attach(ELBOW_PIN[i]);
   elbowSrv[i].write(ELBOW_UP_ANGLE);
   delay(700);
-  elbowSrv[i].detach();
+  // elbowSrv[i].detach();
 }
 static void lowerElbow(uint8_t i)
 {
@@ -116,7 +117,7 @@ static void setupServos()
   }
   capSrv.attach(CAP_PUSHER_PIN);
   capSrv.write(CAP_UP_ANGLE);
-  capSrv.detach();
+  // capSrv.detach();
 }
 static void setupStepper()
 {
@@ -179,7 +180,8 @@ bool Grippers_loop()
   switch (gripperState)
   {
   case GRAB:
-    turretRotate(90.0f); // rotate to grab
+    turretRotate(desiredAngle); // rotate to grab
+    delay(1000);                // TODO lazim mi
     openClaw(currentArm);
     delay(600);
     lowerElbow(currentArm);
@@ -215,7 +217,8 @@ bool Grippers_loop()
   case STORE:
     raiseElbow(currentArm);
     delay(400);
-    turretRotate(-90.0f);
+    turretRotate(-desiredAngle);
+    delay(1000); // TODO lazim mi
     gripperState = RESET_ARM;
     return false;
 
@@ -232,7 +235,8 @@ bool Grippers_loop()
     openClaw(currentArm);
     raiseElbow(currentArm);
     closeClaw(currentArm);
-    turretRotate(-90.0f);
+    turretRotate(-desiredAngle);
+    delay(1000); // TODO lazim mi
     currentArm = (currentArm + 1) % NUM_ARMS;
     lastRejected = true;
     gripperState = GRAB;
