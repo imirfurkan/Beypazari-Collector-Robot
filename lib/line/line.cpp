@@ -216,7 +216,7 @@ bool Line_loop()
       {
         // once center seen, continue forward until the s0 (center of the car) reads black or a
         // BLAST_MS has passed
-        if ((!s0) || (now - lsStamp < BLAST_MS)) // TODO buraya girmiyor s0 kısmını sildim
+        if ((!s0) || (now - lsStamp < BLAST_MS)) // TODO
         {
           Serial.println("drive backward - line 219");
           Motor_driveBackward();
@@ -244,7 +244,7 @@ bool Line_loop()
         if (lsDirection < 0)
         {
           Serial.println("rotating CCW");
-          Motor_rotateCCW(); // TODO doğru mu
+          Motor_rotateCCW();
           // delay(2500);
           lsStamp = now; // start timing here
           return false;
@@ -407,12 +407,12 @@ bool Line_loop()
       return false;
     }
     // — gentle steering corrections —
-    else if ((!s1 && s2) || (s1 && !s2 && !s3))
+    else if (!s1 && s2)
     {
       Motor_gentleLeft(); // Motor_gentleLeft();
       Serial.println("gentle left");
     }
-    else if ((s4 && !s5) || (!s3 && !s4 && s5))
+    else if (s4 && !s5)
     {
       Motor_gentleRight(); // Motor_gentleRight();
       Serial.println("gentle right");
