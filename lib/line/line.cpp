@@ -160,7 +160,7 @@ bool Line_loop()
       }
     }
     // read all 5 IR sensors
-    bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
+    // bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
@@ -284,7 +284,7 @@ bool Line_loop()
   {
 
     // sample & normalize sensors
-    bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
+    // bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
