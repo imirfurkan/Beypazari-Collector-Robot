@@ -22,9 +22,9 @@ static constexpr float IR_THRESHOLD = 0.15f;
 static constexpr unsigned long OBS_DT = 50; // ms
 
 // Line-search timing
-static constexpr unsigned long BLAST_MS = 1500;           // after center hit
-static constexpr unsigned long MAX_CORNER_BLAST_MS = 600; // prep before pivot
-static constexpr unsigned long PIVOT_MS = 3000;           // max pivot time
+static constexpr unsigned long BLAST_MS = 700;            // after center hit
+static constexpr unsigned long MAX_CORNER_BLAST_MS = 200; // prep before pivot
+static constexpr unsigned long PIVOT_MS = 8000;           // max pivot time
 
 // ── FSM States ─────────────────────────────────────────
 enum LineState
@@ -80,15 +80,15 @@ void updateObstacleAvoid()
   bool tooClose =
       (dL < OBSTACLE_THRESHOLD) || (dM < OBSTACLE_THRESHOLD) || (dR < OBSTACLE_THRESHOLD);
 
-  // — debug —
-  Serial.print("OA: dL=");
-  Serial.print(dL);
-  Serial.print("  dM=");
-  Serial.print(dM);
-  Serial.print("  dR=");
-  Serial.print(dR);
-  Serial.print("  tooClose=");
-  Serial.println(tooClose);
+  // // — debug —
+  // Serial.print("OA: dL=");
+  // Serial.print(dL);
+  // Serial.print("  dM=");
+  // Serial.print(dM);
+  // Serial.print("  dR=");
+  // Serial.print(dR);
+  // Serial.print("  tooClose=");
+  // Serial.println(tooClose);
 
   if (!oaActive && !tooClose)
     return;
@@ -135,17 +135,17 @@ bool Line_loop()
 {
   unsigned long now = millis();
 
-  // — debug dump at top of loop —
-  Serial.print("LOOP: State=");
-  Serial.print(lineState == LINE_SEARCH ? "SEARCH" : "FOLLOW");
-  Serial.print("  tapeFound=");
-  Serial.print(tapeFound);
-  Serial.print("  oaActive=");
-  Serial.print(oaActive);
-  Serial.print("  hardLeft=");
-  Serial.print(hardLeftActive);
-  Serial.print("  hardRight=");
-  Serial.println(hardRightActive);
+  // // — debug dump at top of loop —
+  // Serial.print("LOOP: State=");
+  // Serial.print(lineState == LINE_SEARCH ? "SEARCH" : "FOLLOW");
+  // Serial.print("  tapeFound=");
+  // Serial.print(tapeFound);
+  // Serial.print("  oaActive=");
+  // Serial.print(oaActive);
+  // Serial.print("  hardLeft=");
+  // Serial.print(hardLeftActive);
+  // Serial.print("  hardRight=");
+  // Serial.println(hardRightActive);
 
   // —— LINE_SEARCH ———————————————————————————————
   if (lineState == LINE_SEARCH)
@@ -167,10 +167,14 @@ bool Line_loop()
     bool s4 = analogRead(L4) / 1023.0f < IR_THRESHOLD;
     bool s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
 
+    Serial.print("L0=");
+    Serial.print(analogRead(L0));
+    Serial.print(" ");
+
     switch (lsState)
     {
     case LS_ROLL:
-      Serial.println("LS_ROLL");
+      // Serial.println("LS_ROLL");
       Motor_driveForward();
       // if (s0)
       // {
@@ -194,7 +198,7 @@ bool Line_loop()
         oaActive = false;                      // just in case
         Motor_setBaseSpeed(MOTOR_PIVOT_SPEED); // slow down the speed
       }
-      break;
+      return false;
 
     case LS_BLAST:
       Serial.println("LS_BLAST");
@@ -213,20 +217,22 @@ bool Line_loop()
       {
         // once center seen, continue forward until the s0 (center of the car) reads black or a
         // BLAST_MS has passed
-        if ((s0) || (now - lsStamp < BLAST_MS))
+        if ((now - lsStamp < BLAST_MS)) // TODO buraya girmiyor s0 kısmını sildim
         {
+          Serial.println("drive backward - line 219");
           Motor_driveBackward();
         }
         else
         {
           // done blasting, begin pivot
+          Serial.println("begin pivot");
           Motor_stopAll();
           lsStamp = now;
           lsState = LS_PIVOT;
           pivotStarted = false;
         }
       }
-      break;
+      return false;
 
     case LS_PIVOT:
       Serial.println("LS_PIVOT");
@@ -237,23 +243,38 @@ bool Line_loop()
                                                // down in LS_BLAST)
         lsStamp = now;                         // start timing here
         if (lsDirection < 0)
+        {
+          Serial.println("rotating CCW");
           Motor_rotateCCW(); // TODO doğru mu
+          // delay(2500);
+          lsStamp = now; // start timing here
+          return false;
+        }
         else
+        {
+          Serial.println("rotating CW");
           Motor_rotateCW();
+          // delay(2500);
+          lsStamp = now; // start timing here
+          return false;
+        }
         // Motor_rotateCW();
       }
 
       bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
 
-      if (s3 || (now - lsStamp >= PIVOT_MS)) // if s3 sees, or a pivot_ms time has passed (to avoid
-                                             // infinite pivot just in case)
+      if (s3 || (now - lsStamp >= PIVOT_MS)) // if s3 sees, or a pivot_ms time has passed (to
+                                             // avoid infinite pivot just in case)
       {
         Motor_stopAll();
-        Motor_setBaseSpeed(MOTOR_SPEED_DEFAULT); // return false to the normal speed for line follow
+        Motor_setBaseSpeed(
+            MOTOR_SPEED_DEFAULT); // return false to the normal speed for line follow //TODO rotate
+                                  // ten sonra direkt bunu aldigi icin geri gitmeye devam ediyor
+        Serial.println("drive backward - line 262");
         Motor_driveBackward();
         lineState = LINE_FOLLOW;
       }
-      break;
+      return false;
     }
     return false;
   }
@@ -261,6 +282,7 @@ bool Line_loop()
   // —— LINE_FOLLOW ——————————————————————————————
   if (lineState == LINE_FOLLOW)
   {
+
     // sample & normalize sensors
     bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
@@ -269,17 +291,17 @@ bool Line_loop()
     bool s4 = analogRead(L4) / 1023.0f < IR_THRESHOLD;
     bool s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
 
-    // target‐area detection: no sensor sees the line → lost it
-    if (!(s0 || s1 || s2 || s3 || s4 || s5))
-    {
-      // reset for next SEARCH if you want
-      lineState = LINE_SEARCH;
-      tapeFound = false;
-      centerSeen = false;
-      pivotStarted = false;
-      // return true to notify main() that target is reached
-      return true;
-    }
+    //   // // target‐area detection: no sensor sees the line → lost it
+    //   // if (!(s0 || s1 || s2 || s3 || s4 || s5))
+    //   // {
+    //   //   // reset for next SEARCH if you want
+    //   //   lineState = LINE_SEARCH;
+    //   //   tapeFound = false;
+    //   //   centerSeen = false;
+    //   //   pivotStarted = false;
+    //   //   // return true to notify main() that target is reached
+    //   //   return true;
+    //   // }
 
     // — if we're mid‐hard left, finish it —
     if (hardLeftActive)
@@ -288,7 +310,7 @@ bool Line_loop()
       {
         if (hardLeftStamp == 0)
           hardLeftStamp = now;
-        if ((!s0) || (now - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
+        if ((now - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
         // TODO could be dangerous if s0 reading is not reliable at the center
         {
           Motor_driveBackward();
@@ -316,7 +338,7 @@ bool Line_loop()
         }
         else
         {
-          Motor_rotateCW(); // rotate until centered
+          Motor_rotateCCW(); // rotate until centered
         }
       }
       return false;
@@ -329,7 +351,7 @@ bool Line_loop()
       {
         if (hardRightStamp == 0)
           hardRightStamp = now;
-        if ((!s0) || (now - hardRightStamp < MAX_CORNER_BLAST_MS))
+        if ((now - hardRightStamp < MAX_CORNER_BLAST_MS))
         {
           Motor_driveBackward();
         }
@@ -356,7 +378,7 @@ bool Line_loop()
         }
         else
         {
-          Motor_rotateCCW(); // Motor_rotateCW();
+          Motor_rotateCW(); // Motor_rotateCW();
         }
       }
       return false;
@@ -383,13 +405,15 @@ bool Line_loop()
       return false;
     }
     // — gentle steering corrections —
-    else if (!s1 && s2)
+    else if ((!s1 && s2) || (s1 && !s2 && !s3))
     {
-      Motor_gentleRight(); // Motor_gentleLeft();
+      Motor_gentleLeft(); // Motor_gentleLeft();
+      Serial.println("gentle left");
     }
-    else if (s4 && !s5)
+    else if ((s4 && !s5) || (!s3 && !s4 && s5))
     {
-      Motor_gentleLeft(); // Motor_gentleRight();
+      Motor_gentleRight(); // Motor_gentleRight();
+      Serial.println("gentle right");
     }
     // — default: straight ahead —
     else

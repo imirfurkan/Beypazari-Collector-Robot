@@ -125,9 +125,9 @@
 //   delay(10);
 // }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////// EVERYTHING W/O INTERRUPT ////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/////////////////// EVERYTHING W/O INTERRUPT ////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 #include <Arduino.h>
 #include "bottleSeeker.h"
@@ -143,7 +143,11 @@ enum RobotState
   NAVIGATING,
   COMPLETED
 };
-static RobotState robotState = SEEKING;
+static RobotState robotState = SEEKING; // TODO na
+
+static NewPing ultrasonicL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD_SIDES);
+static NewPing ultrasonicM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD_MIDDLE);
+static NewPing ultrasonicR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD_SIDES);
 
 void setup()
 {
@@ -168,6 +172,7 @@ void loop()
     if (BottleSeeker_loop())
     {
       robotState = GRIPPING;
+      delay(1500); // TODO: remove this delay
     }
     break;
 
@@ -178,8 +183,19 @@ void loop()
       {
         Motor_driveBackward();
         delay(1000);
+        Motor_stopAll();
+        delay(200);
+
+        // start rotating CW until left ultrasonic sees nothing closer than threshold
         Motor_rotateCW();
-        delay(1000);
+        while (readDistance(ultrasonicL) <= SEEKER_THRESHOLD_SIDES ||
+               readDistance(ultrasonicM) <= SEEKER_THRESHOLD_MIDDLE ||
+               readDistance(ultrasonicR) <= SEEKER_THRESHOLD_SIDES)
+        {
+          // still “seeing” something on the left → keep spinning
+        }
+        unsigned long extra = random(300, 00);
+        delay(extra); // TODO sol sensor okumayana kadar + belli bi sure
         Motor_stopAll();
       }
       if (bottleCount == 2)
@@ -197,18 +213,18 @@ void loop()
       delay(1000);
       Motor_stopAll();
 
-      // Sequence for placing bottles
-      Grippers_lowerElbows(); // Lower both elbows
-      delay(700);
+      // // Sequence for placing bottles
+      // Grippers_lowerElbows(); // Lower both elbows
+      // delay(700);
 
-      Grippers_openClaws(); // Open both claws
-      delay(700);
+      // Grippers_openClaws(); // Open both claws
+      // delay(700);
 
-      Grippers_raiseElbows(); // Raise both elbows
-      delay(700);
+      // Grippers_raiseElbows(); // Raise both elbows
+      // delay(700);
 
-      Grippers_closeClaws(); // Close both claws
-      delay(700);
+      // Grippers_closeClaws(); // Close both claws
+      // delay(700);
 
       bottleCount = 0; // Reset bottle count
 
@@ -267,7 +283,7 @@ void loop()
 // void setup()
 // {
 //   // start serial for debug (optional)
-//   Serial.begin(9600);
+//   Serial.begin(115200);
 //   while (!Serial)
 //   { /* wait for Serial on some boards */
 //   }
@@ -326,4 +342,52 @@ void loop()
 
 //   // Small delay to avoid flooding the Serial output
 //   delay(10);
+// }
+
+// #include <Arduino.h>
+// #include <Servo.h>
+
+// // from grippers.cpp
+// const uint8_t CAP_PUSHER_PIN = 40;
+// const uint8_t CAP_UP_ANGLE = 90;    // TODO
+// const uint8_t CAP_DOWN_ANGLE = 178; // TODO
+
+// // your switch pin
+// const uint8_t SWITCH_PIN = 41;
+
+// Servo capSrv;
+
+// void setup()
+// {
+//   Serial.begin(115200);
+//   pinMode(SWITCH_PIN, INPUT_PULLUP);
+//   capSrv.attach(CAP_PUSHER_PIN);
+// }
+
+// void loop()
+// {
+//   Serial.println(F("TEST_CAP → pressing & testing cap")); // ← tweaked message
+
+//   // 1) Drop the cap-pusher
+//   capSrv.attach(CAP_PUSHER_PIN);
+//   capSrv.write(CAP_DOWN_ANGLE);
+//   delay(700);
+
+//   // 2) POLL the microswitch
+//   if (digitalRead(SWITCH_PIN) == LOW)
+//   {
+//     Serial.println(F("→ Cap detected")); // switch closed
+//   }
+//   else
+//   {
+//     Serial.println(F("→ No cap detected")); // switch open
+//   }
+
+//   // 3) Retract the pusher
+//   capSrv.write(CAP_UP_ANGLE);
+//   delay(250);
+//   capSrv.detach();
+
+//   // 4) Pause before repeating
+//   delay(2000);
 // }

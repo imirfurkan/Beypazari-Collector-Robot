@@ -19,7 +19,7 @@ unsigned long lastMoveTime = 0; // Tracks last time the servo was moved
 void setup()
 {
   // Initialize serial for debugging
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial)
   {
   } // Wait for Serial to become available

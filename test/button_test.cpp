@@ -13,7 +13,7 @@ Servo capSrv;
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(SWITCH_PIN, INPUT_PULLUP);
   capSrv.attach(CAP_PUSHER_PIN);
 }

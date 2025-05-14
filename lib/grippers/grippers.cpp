@@ -18,12 +18,12 @@ static const uint8_t SWITCH_PIN = 41;     // cap‐present switch
 static bool lastRejected = false;
 
 // ── Angle presets ─────────────────────────────────────────
-static const uint8_t ELBOW_UP_ANGLE = 140;
+static const uint8_t ELBOW_UP_ANGLE = 120;
 static const uint8_t ELBOW_DOWN_ANGLE = 180;
 static const uint8_t CLAW_OPEN_ANGLE = 30;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
-static const uint8_t CAP_UP_ANGLE = 30;   // TODO
-static const uint8_t CAP_DOWN_ANGLE = 70; // TODO
+static const uint8_t CAP_UP_ANGLE = 90;    // TODO
+static const uint8_t CAP_DOWN_ANGLE = 180; // TODO
 static const uint8_t desiredAngle = 93.0f;
 
 // ── Module state ───────────────────────────────────────────
@@ -195,12 +195,31 @@ bool Grippers_loop()
   case TEST_CAP:
   {
     capSrv.attach(CAP_PUSHER_PIN);
-    capSrv.write(CAP_DOWN_ANGLE);
-    delay(700);
+    capSrv.write(140);
+
+    delay(3000);
+
+    // step down from CAP_UP_ANGLE → CAP_DOWN_ANGLE
+    // increase the delay here to make it slower
+    for (uint8_t ang = 140; ang <= 180; ang++)
+    {
+      capSrv.write(ang);
+      delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
+    }
+
+    delay(2000);
     bool capPresent = (digitalRead(SWITCH_PIN) == LOW);
-    capSrv.write(CAP_UP_ANGLE);
-    delay(500);
-    capSrv.detach();
+    // capSrv.write(CAP_UP_ANGLE);
+
+    // step back up from CAP_DOWN_ANGLE → CAP_UP_ANGLE
+    for (int ang = CAP_DOWN_ANGLE; ang >= CAP_UP_ANGLE; ang--)
+    {
+      capSrv.write(ang);
+      delay(20); // same stepping delay
+    }
+
+    delay(2000);
+    // capSrv.detach();
 
     // branch based on cap presence
     if (capPresent)
@@ -233,8 +252,11 @@ bool Grippers_loop()
   case REJECT_BOTTLE:
     // reject flow: open, lift, close, advance arm, no count
     openClaw(currentArm);
+    delay(1500);
     raiseElbow(currentArm);
+    delay(1500);
     closeClaw(currentArm);
+    delay(1500);
     turretRotate(-desiredAngle);
     delay(1000); // TODO lazim mi
     currentArm = (currentArm + 1) % NUM_ARMS;
@@ -252,7 +274,7 @@ bool Grippers_loop()
 // void setup()
 // {
 //   // start serial for debug (optional)
-//   Serial.begin(9600);
+//   Serial.begin(115200);
 //   while (!Serial)
 //   { /* wait for Serial on some boards */
 //   }

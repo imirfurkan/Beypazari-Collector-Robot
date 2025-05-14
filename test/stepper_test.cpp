@@ -8,7 +8,6 @@ const int stepsPerRevolution = 200;
 const float gearRatio = 225.0 / 90.0;
 const float desiredAngle = 90.0;
 
-
 void rotateAngle(float desiredAngle)
 {
   // 1) compute equivalent small-gear angle
@@ -43,7 +42,6 @@ void loop()
   rotateAngle(desiredAngle);
   delay(2000);
 }
-
 
 ///////////// or try this
 
@@ -102,7 +100,7 @@ void loop()
 
 // // ── Arduino lifecycle ───────────────────────────────────────
 // void setup() {
-//   Serial.begin(9600);
+//   Serial.begin(115200);
 //   while (!Serial) { /* wait for Serial on some boards */ }
 
 //   // init pins

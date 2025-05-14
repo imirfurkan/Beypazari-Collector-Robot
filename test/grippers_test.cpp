@@ -145,7 +145,7 @@ void setupStepper()
 /* ── Arduino lifecycle ────────────────────────────────────── */
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   setupServos();
   setupStepper();
   Serial.println(F("Gripper demo ready (idle current minimised)"));
