@@ -22,9 +22,9 @@ static constexpr float IR_THRESHOLD = 0.15f;
 static constexpr unsigned long OBS_DT = 50; // ms
 
 // Line-search timing
-static constexpr unsigned long BLAST_MS = 1500;       // after center hit
-static constexpr unsigned long CORNER_BLAST_MS = 300; // prep before pivot
-static constexpr unsigned long PIVOT_MS = 3000;       // max pivot time
+static constexpr unsigned long BLAST_MS = 1500;           // after center hit
+static constexpr unsigned long MAX_CORNER_BLAST_MS = 600; // prep before pivot
+static constexpr unsigned long PIVOT_MS = 3000;           // max pivot time
 
 // ── FSM States ─────────────────────────────────────────
 enum LineState
@@ -288,7 +288,8 @@ bool Line_loop()
       {
         if (hardLeftStamp == 0)
           hardLeftStamp = now;
-        if (now - hardLeftStamp < CORNER_BLAST_MS)
+        if ((!s0) || (now - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
+        // TODO could be dangerous if s0 reading is not reliable at the center
         {
           Motor_driveBackward();
         }
@@ -328,7 +329,7 @@ bool Line_loop()
       {
         if (hardRightStamp == 0)
           hardRightStamp = now;
-        if (now - hardRightStamp < CORNER_BLAST_MS)
+        if ((!s0) || (now - hardRightStamp < MAX_CORNER_BLAST_MS))
         {
           Motor_driveBackward();
         }
