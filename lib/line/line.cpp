@@ -172,27 +172,28 @@ bool Line_loop()
     case LS_ROLL:
       Serial.println("LS_ROLL");
       Motor_driveForward();
-      if (s0)
-      {
-        lsStamp = now;
-        lsState = LS_PIVOT;
-        tapeFound = true;
-        oaActive = false; // just in case
-      }
-      // if (s1 || s2 || s3 || s4 || s5)
+      // if (s0)
       // {
-      //   // record which side saw black first and assign directions
-      //   if (s1 || s2)
-      //     lsDirection = -1;
-      //   else if (s4 || s5)
-      //     lsDirection = +1;
-      //   else
-      //     lsDirection = -1;
       //   lsStamp = now;
-      //   lsState = LS_BLAST;
+      //   lsState = LS_PIVOT;
       //   tapeFound = true;
       //   oaActive = false; // just in case
       // }
+      if (s1 || s2 || s3 || s4 || s5)
+      {
+        // record which side saw black first and assign directions
+        if (s1 || s2)
+          lsDirection = -1;
+        else if (s4 || s5)
+          lsDirection = +1;
+        else
+          lsDirection = -1;
+        lsStamp = now;
+        lsState = LS_BLAST;
+        tapeFound = true;
+        oaActive = false;                      // just in case
+        Motor_setBaseSpeed(MOTOR_PIVOT_SPEED); // slow down the speed
+      }
       break;
 
     case LS_BLAST:
@@ -210,10 +211,11 @@ bool Line_loop()
       }
       else
       {
-        // once center seen, continue forward for BLAST_MS
-        if (now - lsStamp < BLAST_MS)
+        // once center seen, continue forward until the s0 (center of the car) reads black or a
+        // BLAST_MS has passed
+        if ((s0) || (now - lsStamp < BLAST_MS))
         {
-          Motor_driveForward();
+          Motor_driveBackward();
         }
         else
         {
@@ -231,13 +233,14 @@ bool Line_loop()
       if (!pivotStarted)
       {
         pivotStarted = true;
-        Motor_setBaseSpeed(MOTOR_PIVOT_SPEED); // slow down the speed for the pivot
+        Motor_setBaseSpeed(MOTOR_PIVOT_SPEED); // slow down the speed for the pivot (already slowed
+                                               // down in LS_BLAST)
         lsStamp = now;                         // start timing here
-        // if (lsDirection < 0)
-        //   Motor_rotateCW();
-        // else
-        //   Motor_rotateCCW();
-        Motor_rotateCW();
+        if (lsDirection < 0)
+          Motor_rotateCCW(); // TODO doğru mu
+        else
+          Motor_rotateCW();
+        // Motor_rotateCW();
       }
 
       bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
@@ -389,7 +392,7 @@ bool Line_loop()
     // — default: straight ahead —
     else
     {
-      Motor_driveForward(); // TODO
+      Motor_driveBackward(); // TODO
     }
 
     delay(20);

@@ -7,12 +7,12 @@
 // ────────────────────────────────────────────────
 //  IR sensor pins (define in line.h if you prefer)
 // ────────────────────────────────────────────────
-static constexpr int L0 = A5;
-static constexpr int L1 = A4;
-static constexpr int L2 = A3;
-static constexpr int L3 = A2;
-static constexpr int L4 = A1;
-static constexpr int L5 = A0;
+static constexpr int L0 = A0;
+static constexpr int L1 = A1;
+static constexpr int L2 = A2;
+static constexpr int L3 = A3;
+static constexpr int L4 = A4;
+static constexpr int L5 = A5;
 
 void updateObstacleAvoid();
 /**
