@@ -1,3 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
+///////////////////// EVERYTHING INCLUDED /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 // #include <Arduino.h>
 // #include "tof.h"
 // #include "bottleSeeker.h"
@@ -121,20 +125,126 @@
 //   delay(10);
 // }
 
-// MOTOR TEST CODE FOR MAIN.CPP
+///////////////////////////////////////////////////////////////////////////////
+///////////////////// EVERYTHING W/O INTERRUPT ////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+#include <Arduino.h>
+#include "bottleSeeker.h"
+#include "grippers.h"
+#include "motors.h"
+#include "line.h"
+
+// ── Robot State Machine ─────────────────────────────────
+enum RobotState
+{
+  SEEKING,
+  GRIPPING,
+  NAVIGATING,
+  COMPLETED
+};
+static RobotState robotState = SEEKING;
+
+void setup()
+{
+  Serial.begin(115200);
+  while (!Serial)
+  {
+    delay(10);
+  }
+
+  // Initialize all modules
+  BottleSeeker_setup();
+  Grippers_setup();
+  Line_setup();
+}
+
+void loop()
+{
+  // 2) Run your normal state machine
+  switch (robotState)
+  {
+  case SEEKING:
+    if (BottleSeeker_loop())
+    {
+      robotState = GRIPPING;
+    }
+    break;
+
+  case GRIPPING:
+    if (Grippers_loop())
+    {
+      if (bottleRejected())
+      {
+        Motor_driveBackward();
+        delay(1000);
+        Motor_rotateCW();
+        delay(1000);
+        Motor_stopAll();
+      }
+      if (bottleCount == 2)
+        robotState = NAVIGATING;
+      else
+        robotState = SEEKING;
+    }
+    break;
+
+  case NAVIGATING:
+    if (Line_loop())
+    {
+      Serial.println(F(">> TARGET AREA REACHED! Placing bottles..."));
+      Motor_driveForward();
+      delay(1000);
+      Motor_stopAll();
+
+      // Sequence for placing bottles
+      Grippers_lowerElbows(); // Lower both elbows
+      delay(700);
+
+      Grippers_openClaws(); // Open both claws
+      delay(700);
+
+      Grippers_raiseElbows(); // Raise both elbows
+      delay(700);
+
+      Grippers_closeClaws(); // Close both claws
+      delay(700);
+
+      bottleCount = 0; // Reset bottle count
+
+      Serial.println(F(">> Bottles placed successfully"));
+      robotState = COMPLETED;
+    }
+    break;
+
+  case COMPLETED:
+    // Do nothing - robot stays in place
+    // Optionally blink an LED or do something to indicate completion
+    break;
+  }
+
+  delay(10);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////// MOTOR TEST /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 // #include "motors.h"
 
-// // ── Setup: initialize pins and driver ──────────────────────
-// void setup() {
+//     // ── Setup: initialize pins and driver ──────────────────────
+//     void
+//     setup()
+// {
 //   Motor_setup();
 // }
 
 // // ── Main loop: forward → CW → CCW, each for 5 s ───────────
-// void loop() {
+// void loop()
+// {
 //   // 1) Go straight ahead
 //   Motor_driveForward();
-//   delay(2000);  // 5000 ms = 5 s
+//   delay(2000); // 5000 ms = 5 s
 
 //   // 2) Spin in place clockwise
 //   Motor_rotateCW();
@@ -147,34 +257,41 @@
 //   // then immediately repeats…
 // }
 
-#include <Arduino.h>
-#include "Grippers.h"
+///////////////////////////////////////////////////////////////////////////////
+///////////////////// GRIPPER TEST ///////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-void setup()
-{
-  // start serial for debug (optional)
-  Serial.begin(9600);
-  while (!Serial)
-  { /* wait for Serial on some boards */
-  }
+// #include <Arduino.h>
+// #include "Grippers.h"
 
-  // initialize gripper hardware and state
-  Grippers_setup();
-}
+// void setup()
+// {
+//   // start serial for debug (optional)
+//   Serial.begin(9600);
+//   while (!Serial)
+//   { /* wait for Serial on some boards */
+//   }
 
-void loop()
-{
-  // call the gripper state-machine; if it's still mid-cycle, bail out immediately
-  if (!Grippers_loop())
-  {
-    return;
-  }
+//   // initialize gripper hardware and state
+//   Grippers_setup();
+// }
 
-  // ← here only when Grippers_loop() has returned true
-  Serial.println(F("Gripper cycle complete!"));
-}
+// void loop()
+// {
+//   // call the gripper state-machine; if it's still mid-cycle, bail out immediately
+//   if (!Grippers_loop())
+//   {
+//     return;
+//   }
 
-// // test code bottle seeker
+//   // ← here only when Grippers_loop() has returned true
+//   Serial.println(F("Gripper cycle complete!"));
+// }
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////// BOTTLE SEEKER TETS /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 // #include <Arduino.h>
 // #include "BottleSeeker.h"
 // #include "motors.h"
