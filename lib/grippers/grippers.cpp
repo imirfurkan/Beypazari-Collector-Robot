@@ -22,10 +22,12 @@ static const uint8_t ELBOW_UP_ANGLE = 120;
 static const uint8_t ELBOW_DOWN_ANGLE = 180;
 static const uint8_t CLAW_OPEN_ANGLE = 30;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
-static const uint8_t CAP_UP_ANGLE = 90;    // TODO
-static const uint8_t CAP_DOWN_ANGLE = 180; // TODO
-static const uint8_t desiredAngle = 93.0f;
+static const uint8_t CAP_UP_ANGLE = 75;        // TODO
+static const uint8_t CAP_MIDDLE_ANGLE = 125;   // TODO
+static const uint8_t CAP_DOWN_ANGLE = 165;     // TODO
+static const uint8_t BOTTLE_CHECK_ANGLE = 180; // TODO
 
+static const uint8_t desiredAngle = 93.0f;
 // ── Module state ───────────────────────────────────────────
 enum GripperState
 {
@@ -195,21 +197,30 @@ bool Grippers_loop()
   case TEST_CAP:
   {
     capSrv.attach(CAP_PUSHER_PIN);
-    capSrv.write(140);
-
+    capSrv.write(CAP_MIDDLE_ANGLE);
     delay(3000);
 
     // step down from CAP_UP_ANGLE → CAP_DOWN_ANGLE
     // increase the delay here to make it slower
-    for (uint8_t ang = 140; ang <= 180; ang++)
+    for (uint8_t ang = CAP_MIDDLE_ANGLE; ang <= CAP_DOWN_ANGLE; ang++)
     {
       capSrv.write(ang);
       delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
     }
-
-    delay(2000);
+    delay(1000);
     bool capPresent = (digitalRead(SWITCH_PIN) == LOW);
-    // capSrv.write(CAP_UP_ANGLE);
+
+    bool bottlePresent = false;
+    if (!capPresent)
+    {
+      for (uint8_t ang = CAP_DOWN_ANGLE; ang <= BOTTLE_CHECK_ANGLE; ang++)
+      {
+        capSrv.write(ang);
+        delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
+      }
+      delay(1000);
+      bool bottlePresent = (digitalRead(SWITCH_PIN) == LOW);
+    }
 
     // step back up from CAP_DOWN_ANGLE → CAP_UP_ANGLE
     for (int ang = CAP_DOWN_ANGLE; ang >= CAP_UP_ANGLE; ang--)
@@ -219,16 +230,14 @@ bool Grippers_loop()
     }
 
     delay(2000);
-    // capSrv.detach();
 
-    // branch based on cap presence
-    if (capPresent)
+    if (bottlePresent)
     {
-      gripperState = REJECT_BOTTLE;
+      gripperState = STORE;
     }
     else
     {
-      gripperState = STORE;
+      gripperState = REJECT_BOTTLE;
     }
     return false;
   }
