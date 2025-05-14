@@ -143,7 +143,7 @@ enum RobotState
   NAVIGATING,
   COMPLETED
 };
-static RobotState robotState = SEEKING; // TODO na
+static RobotState robotState = NAVIGATING; // TODO na
 
 static NewPing ultrasonicL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD_SIDES);
 static NewPing ultrasonicM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD_MIDDLE);

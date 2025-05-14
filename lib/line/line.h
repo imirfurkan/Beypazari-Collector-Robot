@@ -7,7 +7,7 @@
 // ────────────────────────────────────────────────
 //  IR sensor pins (define in line.h if you prefer)
 // ────────────────────────────────────────────────
-static constexpr int L0 = A0;
+static constexpr int L0 = 50;
 static constexpr int L1 = A1;
 static constexpr int L2 = A2;
 static constexpr int L3 = A3;

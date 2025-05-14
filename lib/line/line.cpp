@@ -160,16 +160,15 @@ bool Line_loop()
       }
     }
     // read all 5 IR sensors
-    // bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
+    bool s0 = digitalRead(L0);
+    // Serial.println("L0=");
+    // Serial.print(s0);
+    // Serial.println(" ");
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
     bool s4 = analogRead(L4) / 1023.0f < IR_THRESHOLD;
     bool s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
-
-    Serial.print("L0=");
-    Serial.print(analogRead(L0));
-    Serial.print(" ");
 
     switch (lsState)
     {
@@ -217,7 +216,7 @@ bool Line_loop()
       {
         // once center seen, continue forward until the s0 (center of the car) reads black or a
         // BLAST_MS has passed
-        if ((now - lsStamp < BLAST_MS)) // TODO buraya girmiyor s0 kısmını sildim
+        if ((!s0) || (now - lsStamp < BLAST_MS)) // TODO buraya girmiyor s0 kısmını sildim
         {
           Serial.println("drive backward - line 219");
           Motor_driveBackward();
@@ -284,7 +283,10 @@ bool Line_loop()
   {
 
     // sample & normalize sensors
-    // bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
+    bool s0 = digitalRead(L0);
+    // Serial.println("L0=");
+    // Serial.print(s0);
+    // Serial.println(" ");
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
@@ -310,7 +312,7 @@ bool Line_loop()
       {
         if (hardLeftStamp == 0)
           hardLeftStamp = now;
-        if ((now - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
+        if ((s0) || (now - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
         // TODO could be dangerous if s0 reading is not reliable at the center
         {
           Motor_driveBackward();
@@ -351,7 +353,7 @@ bool Line_loop()
       {
         if (hardRightStamp == 0)
           hardRightStamp = now;
-        if ((now - hardRightStamp < MAX_CORNER_BLAST_MS))
+        if ((s0) || (now - hardRightStamp < MAX_CORNER_BLAST_MS))
         {
           Motor_driveBackward();
         }
@@ -413,6 +415,17 @@ bool Line_loop()
     else if ((s4 && !s5) || (!s3 && !s4 && s5))
     {
       Motor_gentleRight(); // Motor_gentleRight();
+      Serial.println("gentle right");
+    }
+
+    else if ((s1 && !s2 && !s3))
+    {
+      Motor_slideLeft(); // Motor_gentleLeft();
+      Serial.println("gentle left");
+    }
+    else if ((!s3 && !s4 && s5))
+    {
+      Motor_slideRight(); // Motor_gentleRight();
       Serial.println("gentle right");
     }
     // — default: straight ahead —

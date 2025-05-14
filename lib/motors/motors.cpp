@@ -100,6 +100,32 @@ void Motor_rotateCCW()
   }
 }
 
+void Motor_slideLeft()
+{
+  int leftPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT_SLIDE));
+  int rightPWM = MOTOR_GENTLE_SPEED;
+
+  for (uint8_t i = 0; i < 4; ++i)
+  {
+    digitalWrite(MOTOR_IN1_PIN[i], HIGH);
+    digitalWrite(MOTOR_IN2_PIN[i], LOW);
+    analogWrite(MOTOR_PWM_PIN[i], (i < 2) ? leftPWM : rightPWM);
+  }
+}
+
+void Motor_slideRight()
+{
+  int leftPWM = MOTOR_GENTLE_SPEED;
+  int rightPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT_SLIDE));
+
+  for (uint8_t i = 0; i < 4; ++i)
+  {
+    digitalWrite(MOTOR_IN1_PIN[i], HIGH);
+    digitalWrite(MOTOR_IN2_PIN[i], LOW);
+    analogWrite(MOTOR_PWM_PIN[i], (i < 2) ? leftPWM : rightPWM);
+  }
+}
+
 void Motor_gentleLeft()
 {
   int leftPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT));

@@ -19,7 +19,8 @@ static constexpr int MOTOR_SPEED_DEFAULT = 150; // PWM 0-255
 static constexpr int MOTOR_PIVOT_SPEED = 130;
 static constexpr int MOTOR_GENTLE_SPEED = 130;
 static constexpr int MOTOR_DOUBLECHECK_SPEED = 110;
-static constexpr float MOTOR_STEER_PCT = 0.4f; // 0.0 = hard turn, 1.0 = straight
+static constexpr float MOTOR_STEER_PCT = 0.5f;       // 1.0 = hard turn, 0.0 = straight
+static constexpr float MOTOR_STEER_PCT_SLIDE = 0.7f; // 1.0 = hard turn, 0.0 = straight
 
 static uint8_t lastBaseSpeed = 0xFF; // impossible initial value
 
@@ -41,6 +42,16 @@ void Motor_gentleLeft();
  * @brief Gentle arc to the right using pre-set gentle speed & steer percentage.
  */
 void Motor_gentleRight();
+
+/**
+ * @brief Gentle arc to the right using pre-set gentle speed & steer percentage.
+ */
+void Motor_slideRight();
+
+/**
+ * @brief Gentle arc to the right using pre-set gentle speed & steer percentage.
+ */
+void Motor_slideLeft();
 
 inline void ensureMotorSpeed(uint8_t speed)
 {
