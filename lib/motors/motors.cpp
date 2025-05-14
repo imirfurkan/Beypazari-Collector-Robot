@@ -100,7 +100,7 @@ void Motor_rotateCCW()
   }
 }
 
-void Motor_slideLeft()
+void Motor_Left()
 {
   int leftPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT_SLIDE));
   int rightPWM = MOTOR_GENTLE_SPEED;
@@ -113,7 +113,7 @@ void Motor_slideLeft()
   }
 }
 
-void Motor_slideRight()
+void Motor_Right()
 {
   int leftPWM = MOTOR_GENTLE_SPEED;
   int rightPWM = int(MOTOR_GENTLE_SPEED * (1.0f - MOTOR_STEER_PCT_SLIDE));

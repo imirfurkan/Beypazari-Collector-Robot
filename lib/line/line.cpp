@@ -420,12 +420,12 @@ bool Line_loop()
 
     else if ((s1 && !s2 && !s3))
     {
-      Motor_slideLeft(); // Motor_gentleLeft();
+      Motor_Left(); // Motor_gentleLeft();
       Serial.println("gentle left");
     }
     else if ((!s3 && !s4 && s5))
     {
-      Motor_slideRight(); // Motor_gentleRight();
+      Motor_Right(); // Motor_gentleRight();
       Serial.println("gentle right");
     }
     // — default: straight ahead —

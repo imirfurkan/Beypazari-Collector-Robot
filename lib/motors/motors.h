@@ -46,12 +46,12 @@ void Motor_gentleRight();
 /**
  * @brief Gentle arc to the right using pre-set gentle speed & steer percentage.
  */
-void Motor_slideRight();
+void Motor_Right();
 
 /**
  * @brief Gentle arc to the right using pre-set gentle speed & steer percentage.
  */
-void Motor_slideLeft();
+void Motor_Left();
 
 inline void ensureMotorSpeed(uint8_t speed)
 {
