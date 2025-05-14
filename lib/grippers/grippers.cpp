@@ -223,7 +223,7 @@ bool Grippers_loop()
     }
 
     // step back up from CAP_DOWN_ANGLE → CAP_UP_ANGLE
-    for (int ang = CAP_DOWN_ANGLE; ang >= CAP_UP_ANGLE; ang--)
+    for (int ang = BOTTLE_CHECK_ANGLE; ang >= CAP_UP_ANGLE; ang--)
     {
       capSrv.write(ang);
       delay(20); // same stepping delay
