@@ -145,9 +145,9 @@ enum RobotState
 };
 static RobotState robotState = SEEKING; // TODO na
 
-static NewPing ultrasonicL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD_SIDES);
-static NewPing ultrasonicM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD_MIDDLE);
-static NewPing ultrasonicR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD_SIDES);
+// static NewPing ultrasonicL(TRIG_LEFT, ECHO_LEFT, SEEKER_THRESHOLD_SIDES);
+// static NewPing ultrasonicM(TRIG_MIDDLE, ECHO_MIDDLE, SEEKER_THRESHOLD_MIDDLE);
+// static NewPing ultrasonicR(TRIG_RIGHT, ECHO_RIGHT, SEEKER_THRESHOLD_SIDES);
 
 void setup()
 {
@@ -186,16 +186,17 @@ void loop()
         Motor_stopAll();
         delay(200);
 
-        // start rotating CW until left ultrasonic sees nothing closer than threshold
+        // // start rotating CW until left ultrasonic sees nothing closer than threshold
         Motor_rotateCW();
-        while (readDistance(ultrasonicL) <= SEEKER_THRESHOLD_SIDES ||
-               readDistance(ultrasonicM) <= SEEKER_THRESHOLD_MIDDLE ||
-               readDistance(ultrasonicR) <= SEEKER_THRESHOLD_SIDES)
-        {
-          // still “seeing” something on the left → keep spinning
-        }
-        unsigned long extra = random(300, 00);
-        delay(extra); // TODO sol sensor okumayana kadar + belli bi sure
+        delay(2000);
+        // while (readDistance(ultrasonicL) <= SEEKER_THRESHOLD_SIDES ||
+        //        readDistance(ultrasonicM) <= SEEKER_THRESHOLD_MIDDLE ||
+        //        readDistance(ultrasonicR) <= SEEKER_THRESHOLD_SIDES)
+        // {
+        //   // still “seeing” something on the left → keep spinning
+        // }
+        // unsigned long extra = random(300, 00);
+        // delay(extra); // TODO sol sensor okumayana kadar + belli bi sure
         Motor_stopAll();
       }
       if (bottleCount == 2)
