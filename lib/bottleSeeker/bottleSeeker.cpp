@@ -100,20 +100,20 @@ bool BottleSeeker_loop()
     {
       fallbackCount = 0;
 
-      // ── DEAD-ZONE DOUBLE-CHECK ───────────────────────
-      // if we're closer than (GRIPPER_THRESHOLD – 10), back up a bit first
-      if (dM < GRIPPER_THRESHOLD - 10)
-      {
-        Serial.println(F("APPROACH: too close → backing up"));
-        Motor_setBaseSpeed(MOTOR_DOUBLECHECK_SPEED);
-        Motor_driveBackward(); // move back out of dead-zone
-        delay(200);            // TODO: calibrate this duration
-        // TODO: check with while the dM is still < GRIPPER_THRESHOLD - 3?
-        Motor_stopAll();
-        Motor_setBaseSpeed(MOTOR_SPEED_DEFAULT);
-        // retry from here on next loop
-        return false;
-      }
+      // // ── DEAD-ZONE DOUBLE-CHECK ───────────────────────
+      // // if we're closer than (GRIPPER_THRESHOLD – 10), back up a bit first
+      // if (dM < GRIPPER_THRESHOLD - 10)
+      // {
+      //   Serial.println(F("APPROACH: too close → backing up"));
+      //   Motor_setBaseSpeed(MOTOR_DOUBLECHECK_SPEED);
+      //   Motor_driveBackward(); // move back out of dead-zone
+      //   delay(200);            // TODO: calibrate this duration
+      //   // TODO: check with while the dM is still < GRIPPER_THRESHOLD - 3?
+      //   Motor_stopAll();
+      //   Motor_setBaseSpeed(MOTOR_SPEED_DEFAULT);
+      //   // retry from here on next loop
+      //   return false;
+      // }
 
       Serial.println(F("APPROACH: in grip range -> ready"));
       Motor_stopAll();

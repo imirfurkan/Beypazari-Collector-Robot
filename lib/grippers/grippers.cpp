@@ -22,9 +22,9 @@ static const uint8_t ELBOW_UP_ANGLE = 120;
 static const uint8_t ELBOW_DOWN_ANGLE = 180;
 static const uint8_t CLAW_OPEN_ANGLE = 30;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
-static const uint8_t CAP_UP_ANGLE = 75;        // TODO
-static const uint8_t CAP_MIDDLE_ANGLE = 125;   // TODO
-static const uint8_t CAP_DOWN_ANGLE = 165;     // TODO
+static const uint8_t CAP_UP_ANGLE = 85;        // TODO
+static const uint8_t CAP_MIDDLE_ANGLE = 165;   // TODO
+static const uint8_t CAP_DOWN_ANGLE = 175;     // TODO
 static const uint8_t BOTTLE_CHECK_ANGLE = 180; // TODO
 
 static const uint8_t desiredAngle = 93.0f;
@@ -80,7 +80,7 @@ static void turretRotate(float angle)
   delay(200);
   // we disable the stepper driver here to avoid constant current
   // draw when the arm is not moving and overheating the driver
-  disableStepper();
+  // disableStepper(); // TODO disable et? akım?
 }
 static void openClaw(uint8_t i)
 {
@@ -128,7 +128,7 @@ static void setupStepper()
   pinMode(DIR_PIN, OUTPUT);
   pinMode(STEP_PIN, OUTPUT);
   digitalWrite(DIR_PIN, LOW);
-  disableStepper();
+  // disableStepper(); //TODO enable hep?
 }
 
 // ── Public API ──────────────────────────────────────────────
@@ -219,7 +219,7 @@ bool Grippers_loop()
         delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
       }
       delay(1000);
-      bool bottlePresent = (digitalRead(SWITCH_PIN) == LOW);
+      bottlePresent = (digitalRead(SWITCH_PIN) == LOW);
     }
 
     // step back up from CAP_DOWN_ANGLE → CAP_UP_ANGLE
