@@ -447,7 +447,6 @@ void loop()
     disableTOFInterrupt();
 
     // 2) Clear the VL53L0X’s own interrupt latch
-    clearTOFInterrupt();
 
     // 3) Report the event
     Serial.println(F("🚨 TOF interrupt: obstacle detected!"));
@@ -462,7 +461,7 @@ void loop()
     delay(2500);
     // 6) Re-arm for the next interrupt
     enableTOFInterrupt();
-
+    clearTOFInterrupt(true);
     Motor_driveForward();
 
     // 7) Clear our software flag
