@@ -54,9 +54,12 @@ void setupTOF()
   lox.setGpioConfig(VL53L0X_DEVICEMODE_CONTINUOUS_RANGING,
                     VL53L0X_GPIOFUNCTIONALITY_THRESHOLD_CROSSED_LOW, VL53L0X_INTERRUPTPOLARITY_LOW);
 
-  setTOFThresholds(300, UINT16_MAX);
+  setTOFThresholds(800, UINT16_MAX);
+
   lox.setDeviceMode(VL53L0X_DEVICEMODE_CONTINUOUS_RANGING, false);
   lox.startMeasurement();
+
+  // lox.setMeasurementTimingBudgetMicroSeconds(20000); // 20 ms integration
 
   enableTOFInterrupt();
 }

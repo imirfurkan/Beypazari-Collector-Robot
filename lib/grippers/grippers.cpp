@@ -194,6 +194,8 @@ bool Grippers_loop()
       aybSrv.write(180);
     }
 
+    aybSrv.detach();
+
     turretRotate(desiredAngle); // rotate to grab
     delay(1000);                // TODO lazim mi
     openClaw(currentArm);
@@ -211,7 +213,7 @@ bool Grippers_loop()
     /// UP -> MIDDLE (SLOW)
     capSrv.attach(CAP_PUSHER_PIN);
     capSrv.write(CAP_MIDDLE_ANGLE);
-    delay(3000);
+    delay(2000);
 
     // step down from CAP_UP_ANGLE → CAP_DOWN_ANGLE
     // increase the delay here to make it slower
@@ -245,11 +247,7 @@ bool Grippers_loop()
     }
 
     // step back up from CAP_DOWN_ANGLE → CAP_UP_ANGLE
-    for (int ang = BOTTLE_CHECK_ANGLE; ang >= CAP_UP_ANGLE; ang--)
-    {
-      capSrv.write(ang);
-      delay(20); // same stepping delay
-    }
+    capSrv.write(CAP_UP_ANGLE);
 
     delay(2000);
 

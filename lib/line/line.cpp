@@ -1,6 +1,7 @@
 #include "line.h"
 #include "ultrasonic.h" // provides TRIG_*, ECHO_*, DIST_THRESHOLD & readDistance()
 #include "motors.h"
+#include "tof.h"
 #include <Arduino.h>
 #include <NewPing.h> // NewPing is brought in by ultrasonic.h, but include for clarity
 
@@ -150,6 +151,7 @@ bool Line_loop()
   // —— LINE_SEARCH ———————————————————————————————
   if (lineState == LINE_SEARCH)
   {
+    enableTOFInterrupt(); // TODO overhead?
     if (!tapeFound)
     {
       updateObstacleAvoid();
@@ -272,6 +274,7 @@ bool Line_loop()
         Serial.println("drive backward - line 262");
         Motor_driveBackward();
         lineState = LINE_FOLLOW;
+        disableTOFInterrupt(); // TODO
       }
       return false;
     }
