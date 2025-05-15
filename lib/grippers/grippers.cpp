@@ -13,12 +13,13 @@ static const uint8_t ELBOW_PIN[2] = {37, 39};
 static const uint8_t CLAW_PIN[2] = {36, 38};
 static const uint8_t CAP_PUSHER_PIN = 40; // microswitch actuator
 static const uint8_t SWITCH_PIN = 41;     // cap‐present switch
+static const uint8_t Ayberk_Servo = 32;   // cap‐present switch
 
 // ── Module‐local flag ───────────────────────────────────────
 static bool lastRejected = false;
 
 // ── Angle presets ─────────────────────────────────────────
-static const uint8_t ELBOW_UP_ANGLE = 120;
+static const uint8_t ELBOW_UP_ANGLE = 100;
 static const uint8_t ELBOW_DOWN_ANGLE = 180;
 static const uint8_t CLAW_OPEN_ANGLE = 30;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
@@ -27,7 +28,7 @@ static const uint8_t CAP_MIDDLE_ANGLE = 165;   // TODO
 static const uint8_t CAP_DOWN_ANGLE = 175;     // TODO
 static const uint8_t BOTTLE_CHECK_ANGLE = 180; // TODO
 
-static const uint8_t desiredAngle = 93.0f;
+static const uint8_t desiredAngle = 92.0f;
 // ── Module state ───────────────────────────────────────────
 enum GripperState
 {
@@ -42,7 +43,7 @@ static uint8_t currentArm = 0;
 uint8_t bottleCount = 0;
 
 // ── Servo objects ──────────────────────────────────────────
-static Servo elbowSrv[2], clawSrv[2], capSrv;
+static Servo elbowSrv[2], clawSrv[2], capSrv, aybSrv;
 
 // ── Private helpers ────────────────────────────────────────
 static void enableStepper()
@@ -182,6 +183,17 @@ bool Grippers_loop()
   switch (gripperState)
   {
   case GRAB:
+
+    aybSrv.attach(Ayberk_Servo);
+    if (currentArm == 0)
+    {
+      aybSrv.write(90);
+    }
+    else if (currentArm == 1)
+    {
+      aybSrv.write(180);
+    }
+
     turretRotate(desiredAngle); // rotate to grab
     delay(1000);                // TODO lazim mi
     openClaw(currentArm);
@@ -196,27 +208,37 @@ bool Grippers_loop()
 
   case TEST_CAP:
   {
+    /// UP -> MIDDLE (SLOW)
     capSrv.attach(CAP_PUSHER_PIN);
     capSrv.write(CAP_MIDDLE_ANGLE);
     delay(3000);
 
     // step down from CAP_UP_ANGLE → CAP_DOWN_ANGLE
     // increase the delay here to make it slower
-    for (uint8_t ang = CAP_MIDDLE_ANGLE; ang <= CAP_DOWN_ANGLE; ang++)
-    {
-      capSrv.write(ang);
-      delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
-    }
+    // for (uint8_t ang = CAP_MIDDLE_ANGLE; ang <= CAP_DOWN_ANGLE; ang++)
+    // {
+    //   capSrv.write(ang);
+    //   delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
+    // }
+
+    /// MIDDLE -> CAP (FAST)
+    capSrv.write(CAP_DOWN_ANGLE);
+
     delay(1000);
     bool capPresent = (digitalRead(SWITCH_PIN) == LOW);
 
+    /// CAP -> MIDDLE (SLOW)
+    capSrv.write(CAP_MIDDLE_ANGLE);
+    delay(1000);
+
+    // MIDDLE -> BOTTLE
     bool bottlePresent = false;
     if (!capPresent)
     {
-      for (uint8_t ang = CAP_DOWN_ANGLE; ang <= BOTTLE_CHECK_ANGLE; ang++)
+      for (uint8_t ang = CAP_MIDDLE_ANGLE; ang <= BOTTLE_CHECK_ANGLE; ang++)
       {
         capSrv.write(ang);
-        delay(60); // ← 20ms per degree ~ slower; make larger to go even slower
+        delay(30); // ← 20ms per degree ~ slower; make larger to go even slower
       }
       delay(1000);
       bottlePresent = (digitalRead(SWITCH_PIN) == LOW);
@@ -245,6 +267,7 @@ bool Grippers_loop()
   case STORE:
     raiseElbow(currentArm);
     delay(400);
+
     turretRotate(-desiredAngle);
     delay(1000); // TODO lazim mi
     gripperState = RESET_ARM;

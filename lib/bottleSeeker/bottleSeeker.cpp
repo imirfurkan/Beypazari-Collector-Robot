@@ -100,7 +100,7 @@ bool BottleSeeker_loop()
     {
       fallbackCount = 0;
 
-      // // ── DEAD-ZONE DOUBLE-CHECK ───────────────────────
+      // // ── DEAD-ZONE DOUBLE-CHECK ─────────────────────── //TODO aktive et
       // // if we're closer than (GRIPPER_THRESHOLD – 10), back up a bit first
       // if (dM < GRIPPER_THRESHOLD - 10)
       // {
