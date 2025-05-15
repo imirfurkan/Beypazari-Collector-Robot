@@ -70,7 +70,7 @@ void updateObstacleAvoid()
   if (lineState != LINE_SEARCH) // works only in line search
     return;
   unsigned long now = millis();
-  if (now - lastObsChk < OBS_DT) // check every OBS_DT ms
+  if (millis() - lastObsChk < OBS_DT) // check every OBS_DT ms
     return;
   lastObsChk = now;
 
@@ -218,7 +218,7 @@ bool Line_loop()
       {
         // once center seen, continue forward until the s0 (center of the car) reads black or a
         // BLAST_MS has passed
-        if ((!s0) || (now - lsStamp < BLAST_MS)) // TODO
+        if ((!s0) || (millis() - lsStamp < BLAST_MS)) // TODO
         {
           Serial.println("drive backward - line 219");
           Motor_driveBackward();
@@ -264,8 +264,8 @@ bool Line_loop()
 
       bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
 
-      if (s3 || (now - lsStamp >= PIVOT_MS)) // if s3 sees, or a pivot_ms time has passed (to
-                                             // avoid infinite pivot just in case)
+      if (s3 || (millis() - lsStamp >= PIVOT_MS)) // if s3 sees, or a pivot_ms time has passed (to
+                                                  // avoid infinite pivot just in case)
       {
         Motor_stopAll();
         Motor_setBaseSpeed(
@@ -315,7 +315,7 @@ bool Line_loop()
       {
         if (hardLeftStamp == 0)
           hardLeftStamp = now;
-        if ((s0) || (now - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
+        if ((s0) || (millis() - hardLeftStamp < MAX_CORNER_BLAST_MS)) // until s0 doesn't read.
         // TODO could be dangerous if s0 reading is not reliable at the center
         {
           Motor_driveBackward();
@@ -356,7 +356,7 @@ bool Line_loop()
       {
         if (hardRightStamp == 0)
           hardRightStamp = now;
-        if ((s0) || (now - hardRightStamp < MAX_CORNER_BLAST_MS))
+        if ((s0) || (millis() - hardRightStamp < MAX_CORNER_BLAST_MS))
         {
           Motor_driveBackward();
         }
