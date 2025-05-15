@@ -23,7 +23,7 @@ static constexpr float IR_THRESHOLD = 0.15f;
 static constexpr unsigned long OBS_DT = 50; // ms
 
 // Line-search timing
-static constexpr unsigned long BLAST_MS = 700;            // after center hit
+static constexpr unsigned long BLAST_MS = 2000;           // after center hit
 static constexpr unsigned long MAX_CORNER_BLAST_MS = 200; // prep before pivot
 static constexpr unsigned long PIVOT_MS = 4000;           // max pivot time
 
@@ -216,11 +216,15 @@ bool Line_loop()
       }
       else
       {
+        bool s0 = digitalRead(L0);
         // once center seen, continue forward until the s0 (center of the car) reads black or a
         // BLAST_MS has passed
-        if ((!s0) || (millis() - lsStamp < BLAST_MS)) // TODO
+        if ((!s0) && (millis() - lsStamp < BLAST_MS)) // TODO
         {
           Serial.println("drive backward - line 219");
+          Serial.print("s0=");
+          Serial.println(s0);
+          Serial.print(" ");
           Motor_driveBackward();
         }
         else
@@ -247,7 +251,6 @@ bool Line_loop()
         {
           Serial.println("rotating CCW");
           Motor_rotateCCW();
-          // delay(2500);
           lsStamp = now; // start timing here
           return false;
         }
@@ -255,7 +258,6 @@ bool Line_loop()
         {
           Serial.println("rotating CW");
           Motor_rotateCW();
-          // delay(2500);
           lsStamp = now; // start timing here
           return false;
         }
