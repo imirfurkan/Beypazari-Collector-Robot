@@ -23,7 +23,7 @@ static constexpr float IR_THRESHOLD = 0.15f;
 static constexpr unsigned long OBS_DT = 50; // ms
 
 // Line-search timing
-static constexpr unsigned long BLAST_MS = 2000;           // after center hit
+static constexpr unsigned long BLAST_MS = 700;            // after center hit
 static constexpr unsigned long MAX_CORNER_BLAST_MS = 200; // prep before pivot
 static constexpr unsigned long PIVOT_MS = 4000;           // max pivot time
 
@@ -61,6 +61,11 @@ static unsigned long hardLeftStamp = 0;
 static bool hardRightActive = false;
 static bool hardRightPhase2 = false;
 static unsigned long hardRightStamp = 0;
+
+// ── Target-area detection timer ───────────────────────
+static bool noLineDetected = false;
+static unsigned long noLineStamp = 0;
+static constexpr unsigned long TARGET_MS = 3000; // ms
 
 // ────────────────────────────────────────────────
 //  Obstacle‐avoid (LINE_SEARCH only)
@@ -152,6 +157,7 @@ bool Line_loop()
   if (lineState == LINE_SEARCH)
   {
     enableTOFInterrupt(); // TODO overhead?
+    clearTOFInterrupt();
     if (!tapeFound)
     {
       updateObstacleAvoid();
@@ -162,7 +168,9 @@ bool Line_loop()
       }
     }
     // read all 5 IR sensors
-    bool s0 = digitalRead(L0);
+    // bool s0 = digitalRead(L0);
+
+    bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
     // Serial.println("L0=");
     // Serial.print(s0);
     // Serial.println(" ");
@@ -216,10 +224,10 @@ bool Line_loop()
       }
       else
       {
-        bool s0 = digitalRead(L0);
+        // s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
         // once center seen, continue forward until the s0 (center of the car) reads black or a
         // BLAST_MS has passed
-        if ((!s0) && (millis() - lsStamp < BLAST_MS)) // TODO
+        if ((millis() - lsStamp < BLAST_MS)) // TODO
         {
           Serial.println("drive backward - line 219");
           Serial.print("s0=");
@@ -251,6 +259,7 @@ bool Line_loop()
         {
           Serial.println("rotating CCW");
           Motor_rotateCCW();
+          delay(200);
           lsStamp = now; // start timing here
           return false;
         }
@@ -258,16 +267,19 @@ bool Line_loop()
         {
           Serial.println("rotating CW");
           Motor_rotateCW();
+          delay(200);
           lsStamp = now; // start timing here
           return false;
         }
         // Motor_rotateCW();
       }
 
-      bool s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
+      s3 = analogRead(L3) / 1023.0 < IR_THRESHOLD;
 
-      if (s3 || (millis() - lsStamp >= PIVOT_MS)) // if s3 sees, or a pivot_ms time has passed (to
-                                                  // avoid infinite pivot just in case)
+      if ((!s1 && !s2 && s3 && !s4 && !s5) || (!s1 && !s2 && s3 && s4 && !s5) ||
+          (!s1 && s2 && s3 && !s4 && !s5) ||
+          (millis() - lsStamp >= PIVOT_MS)) // if s3 sees, or a pivot_ms time has passed (to
+                                            // avoid infinite pivot just in case)
       {
         Motor_stopAll();
         Motor_setBaseSpeed(
@@ -275,7 +287,15 @@ bool Line_loop()
                                   // ten sonra direkt bunu aldigi icin geri gitmeye devam ediyor
         Serial.println("drive backward - line 262");
         Motor_driveBackward();
-        lineState = LINE_FOLLOW;
+        if ((millis() - lsStamp >= PIVOT_MS))
+        {
+          lsState = LS_ROLL;
+        }
+        else
+        {
+          lineState = LINE_FOLLOW;
+        }
+
         disableTOFInterrupt(); // TODO
       }
       return false;
@@ -288,27 +308,48 @@ bool Line_loop()
   {
 
     // sample & normalize sensors
-    bool s0 = digitalRead(L0);
-    // Serial.println("L0=");
-    // Serial.print(s0);
-    // Serial.println(" ");
+    bool s0 = analogRead(L0) / 1023.0f < IR_THRESHOLD;
     bool s1 = analogRead(L1) / 1023.0f < IR_THRESHOLD;
     bool s2 = analogRead(L2) / 1023.0f < IR_THRESHOLD;
     bool s3 = analogRead(L3) / 1023.0f < IR_THRESHOLD;
     bool s4 = analogRead(L4) / 1023.0f < IR_THRESHOLD;
     bool s5 = analogRead(L5) / 1023.0f < IR_THRESHOLD;
 
-    //   // // target‐area detection: no sensor sees the line → lost it
-    //   // if (!(s0 || s1 || s2 || s3 || s4 || s5))
-    //   // {
-    //   //   // reset for next SEARCH if you want
-    //   //   lineState = LINE_SEARCH;
-    //   //   tapeFound = false;
-    //   //   centerSeen = false;
-    //   //   pivotStarted = false;
-    //   //   // return true to notify main() that target is reached
-    //   //   return true;
-    //   // }
+    // —— Non-blocking target-area detection ——
+    bool anySee = (s1 || s2 || s3 || s4 || s5);
+    if (!anySee)
+    {
+      if (!noLineDetected)
+      {
+        noLineDetected = true;
+        noLineStamp = now;
+      }
+      else if (noLineDetected && (now - noLineStamp >= TARGET_MS))
+      {
+        // target reached
+        noLineDetected = false;
+        noLineStamp = 0;
+        return true;
+      }
+    }
+    else
+    {
+      // reset timer on any sighting
+      noLineDetected = false;
+      noLineStamp = now; // just reset
+    }
+
+    // // target‐area detection: no sensor sees the line → lost it
+    // if (!(s0 || s1 || s2 || s3 || s4 || s5))
+    // {
+    //   // reset for next SEARCH if you want
+    //   lineState = LINE_SEARCH;
+    //   tapeFound = false;
+    //   centerSeen = false;
+    //   pivotStarted = false;
+    //   // return true to notify main() that target is reached
+    //   return true;
+    // }
 
     // — if we're mid‐hard left, finish it —
     if (hardLeftActive)
