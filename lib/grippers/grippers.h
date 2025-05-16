@@ -12,8 +12,11 @@ bool Grippers_loop();
 /// Returns true if the last Grippers_loop() cycle that returned true was a reject.
 bool bottleRejected();
 
+// in grippers.h
+uint8_t Grippers_getBottleCount();
+
 // New public functions to expose gripper actions
 void Grippers_openClaws();
-void Grippers_closeClaws(); 
+void Grippers_closeClaws();
 void Grippers_lowerElbows();
 void Grippers_raiseElbows();

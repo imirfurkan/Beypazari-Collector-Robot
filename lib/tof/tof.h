@@ -7,6 +7,7 @@
 // Flag set by the ISR when the VL53L0X threshold is crossed
 extern volatile bool triggeredObstacle;
 
+uint16_t readTOF();
 // Call once in setup()
 void setupTOF();
 

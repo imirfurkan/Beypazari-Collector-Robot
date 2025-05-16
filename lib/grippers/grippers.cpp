@@ -11,24 +11,27 @@ static const uint8_t NUM_ARMS = 2; // number of gripper arms
 
 static const uint8_t ELBOW_PIN[2] = {37, 39};
 static const uint8_t CLAW_PIN[2] = {36, 38};
-static const uint8_t CAP_PUSHER_PIN = 40; // microswitch actuator
-static const uint8_t SWITCH_PIN = 41;     // cap‐present switch
-static const uint8_t Ayberk_Servo = 32;   // cap‐present switch
+static const uint8_t CAP_PUSHER_PIN = 40;        // microswitch actuator
+static const uint8_t SWITCH_PIN = 41;            // cap‐present switch
+static const uint8_t Ayberk_Servo[2] = {31, 33}; // cap‐present switch
+static const uint8_t EGE_SERVO = 52;             // cap‐present switch
 
 // ── Module‐local flag ───────────────────────────────────────
 static bool lastRejected = false;
 
 // ── Angle presets ─────────────────────────────────────────
-static const uint8_t ELBOW_UP_ANGLE = 100;
+static const uint8_t ELBOW_UP_ANGLE = 110;
 static const uint8_t ELBOW_DOWN_ANGLE = 180;
-static const uint8_t CLAW_OPEN_ANGLE = 30;
+static const uint8_t CLAW_OPEN_ANGLE = 40;
 static const uint8_t CLAW_CLOSE_ANGLE = 180;
-static const uint8_t CAP_UP_ANGLE = 85;        // TODO
-static const uint8_t CAP_MIDDLE_ANGLE = 165;   // TODO
-static const uint8_t CAP_DOWN_ANGLE = 175;     // TODO
-static const uint8_t BOTTLE_CHECK_ANGLE = 180; // TODO
+static const uint8_t CAP_UP_ANGLE = 55;        // TODO
+static const uint8_t CAP_MIDDLE_ANGLE = 120;   // TODO
+static const uint8_t CAP_DOWN_ANGLE = 150;     // TODO
+static const uint8_t BOTTLE_CHECK_ANGLE = 163; // TODO
 
-static const uint8_t desiredAngle = 92.0f;
+static const uint8_t desiredAngle = 194.0f;
+static const uint8_t desiredReturnAngle = 180.0f;
+// static const uint8_t desiredAngle = 194.0f; // TODO desired turn back angle
 // ── Module state ───────────────────────────────────────────
 enum GripperState
 {
@@ -40,10 +43,10 @@ enum GripperState
 };
 static GripperState gripperState = GRAB;
 static uint8_t currentArm = 0;
-uint8_t bottleCount = 0;
+uint8_t bottleCount = 2;
 
 // ── Servo objects ──────────────────────────────────────────
-static Servo elbowSrv[2], clawSrv[2], capSrv, aybSrv;
+static Servo elbowSrv[2], clawSrv[2], capSrv, aybSrv[2], egeSrv;
 
 // ── Private helpers ────────────────────────────────────────
 static void enableStepper()
@@ -55,6 +58,12 @@ static void enableStepper()
 static void disableStepper()
 {
   digitalWrite(EN_PIN, HIGH); // HIGH = disabled
+}
+
+// in grippers.cpp
+uint8_t Grippers_getBottleCount()
+{
+  return bottleCount;
 }
 
 static void turretRotate(float angle)
@@ -78,10 +87,10 @@ static void turretRotate(float angle)
     digitalWrite(STEP_PIN, LOW);
     delay(5); // sets the pwm
   }
-  delay(200);
+  delay(400);
   // we disable the stepper driver here to avoid constant current
   // draw when the arm is not moving and overheating the driver
-  // disableStepper(); // TODO disable et? akım?
+  disableStepper(); // TODO disable et? akım?
 }
 static void openClaw(uint8_t i)
 {
@@ -120,6 +129,8 @@ static void setupServos()
   }
   capSrv.attach(CAP_PUSHER_PIN);
   capSrv.write(CAP_UP_ANGLE);
+  egeSrv.attach(EGE_SERVO);
+  egeSrv.write(170);
   // capSrv.detach();
 }
 static void setupStepper()
@@ -129,7 +140,7 @@ static void setupStepper()
   pinMode(DIR_PIN, OUTPUT);
   pinMode(STEP_PIN, OUTPUT);
   digitalWrite(DIR_PIN, LOW);
-  // disableStepper(); //TODO enable hep?
+  disableStepper(); // TODO enable hep?
 }
 
 // ── Public API ──────────────────────────────────────────────
@@ -183,23 +194,33 @@ bool Grippers_loop()
   switch (gripperState)
   {
   case GRAB:
+    egeSrv.attach(EGE_SERVO);
+    egeSrv.write(75);
+    delay(300);
 
-    aybSrv.attach(Ayberk_Servo);
+    aybSrv[0].attach(Ayberk_Servo[0]);
+    aybSrv[1].attach(Ayberk_Servo[1]);
+
     if (currentArm == 0)
     {
-      aybSrv.write(90);
+      aybSrv[0].write(90);
+      aybSrv[1].write(0);
     }
     else if (currentArm == 1)
     {
-      aybSrv.write(180);
+      aybSrv[0].write(180);
+      aybSrv[1].write(90);
     }
 
-    aybSrv.detach();
-
     turretRotate(desiredAngle); // rotate to grab
-    delay(1000);                // TODO lazim mi
+    delay(1500);                // TODO lazim mi
+    aybSrv[0].write(90);
+    aybSrv[1].write(90);
+    delay(200);
+    // egeSrv.write(170);
     openClaw(currentArm);
-    delay(600);
+    delay(1000);
+
     lowerElbow(currentArm);
     delay(600);
 
@@ -250,6 +271,10 @@ bool Grippers_loop()
     capSrv.write(CAP_UP_ANGLE);
 
     delay(2000);
+    egeSrv.write(75);
+    aybSrv[0].write(180);
+    aybSrv[1].write(0);
+    delay(500);
 
     if (bottlePresent)
     {
@@ -263,10 +288,11 @@ bool Grippers_loop()
   }
 
   case STORE:
+
     raiseElbow(currentArm);
     delay(400);
 
-    turretRotate(-desiredAngle);
+    turretRotate(-desiredReturnAngle);
     delay(1000); // TODO lazim mi
     gripperState = RESET_ARM;
     return false;
@@ -277,6 +303,8 @@ bool Grippers_loop()
     currentArm = (currentArm + 1) % NUM_ARMS;
     lastRejected = false;
     gripperState = GRAB;
+    egeSrv.write(170);
+
     return true; // one full cycle done
 
   case REJECT_BOTTLE:
@@ -286,12 +314,12 @@ bool Grippers_loop()
     raiseElbow(currentArm);
     delay(1500);
     closeClaw(currentArm);
-    delay(1500);
-    turretRotate(-desiredAngle);
+    delay(1000);
+    turretRotate(-desiredReturnAngle);
     delay(1000); // TODO lazim mi
-    currentArm = (currentArm + 1) % NUM_ARMS;
     lastRejected = true;
     gripperState = GRAB;
+    egeSrv.write(170);
     return true;
   }
   return false;

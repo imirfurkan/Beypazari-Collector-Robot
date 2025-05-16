@@ -35,6 +35,13 @@ void setTOFThresholds(uint16_t low_mm, uint16_t high_mm)
   lox.setInterruptThresholds(low, high, false);
 }
 
+uint16_t readTOF()
+{
+  VL53L0X_RangingMeasurementData_t m;
+  lox.rangingTest(&m, false); // single-shot ranging
+  return m.RangeMilliMeter;   // zero if out of range
+}
+
 void setupTOF()
 {
   pinMode(VL53LOX_ShutdownPin, OUTPUT);
@@ -54,7 +61,7 @@ void setupTOF()
   lox.setGpioConfig(VL53L0X_DEVICEMODE_CONTINUOUS_RANGING,
                     VL53L0X_GPIOFUNCTIONALITY_THRESHOLD_CROSSED_LOW, VL53L0X_INTERRUPTPOLARITY_LOW);
 
-  setTOFThresholds(800, UINT16_MAX);
+  setTOFThresholds(1000, UINT16_MAX);
 
   lox.setDeviceMode(VL53L0X_DEVICEMODE_CONTINUOUS_RANGING, false);
   lox.startMeasurement();
