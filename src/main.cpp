@@ -161,7 +161,7 @@ enum RobotState
   NAVIGATING,
   COMPLETED
 };
-static RobotState robotState = NAVIGATING; // TODO na
+static RobotState robotState = SEEKING; // TODO na
 
 void setup()
 {
@@ -175,7 +175,6 @@ void setup()
   BottleSeeker_setup();
   Grippers_setup();
   Line_setup();
-  Motor_driveForward(); // ← kick the wheels on every pass
 }
 
 void loop()

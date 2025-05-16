@@ -43,7 +43,7 @@ enum GripperState
 };
 static GripperState gripperState = GRAB;
 static uint8_t currentArm = 0;
-uint8_t bottleCount = 2;
+uint8_t bottleCount = 0;
 
 // ── Servo objects ──────────────────────────────────────────
 static Servo elbowSrv[2], clawSrv[2], capSrv, aybSrv[2], egeSrv;

@@ -33,7 +33,7 @@ enum LineState
   LINE_SEARCH,
   LINE_FOLLOW
 };
-static LineState lineState = LINE_FOLLOW;
+static LineState lineState = LINE_SEARCH;
 
 enum LSState
 {
@@ -121,7 +121,7 @@ void updateObstacleAvoid()
 // ────────────────────────────────────────────────
 void Line_setup()
 {
-  // Serial.begin(115200);
+  Serial.begin(115200);
   Motor_setup();
   // IR sensor pins
   pinMode(L0, INPUT);
@@ -156,8 +156,6 @@ bool Line_loop()
   // —— LINE_SEARCH ———————————————————————————————
   if (lineState == LINE_SEARCH)
   {
-    enableTOFInterrupt(); // TODO overhead?
-    clearTOFInterrupt();
     if (!tapeFound)
     {
       updateObstacleAvoid();
@@ -167,7 +165,6 @@ bool Line_loop()
         return false;
       }
     }
-
     // read all 5 IR sensors
     // bool s0 = digitalRead(L0);
 
@@ -184,7 +181,7 @@ bool Line_loop()
     switch (lsState)
     {
     case LS_ROLL:
-      Serial.println("LS_ROLL");
+      // Serial.println("LS_ROLL");
       Motor_driveForward();
       // if (s0)
       // {
@@ -296,8 +293,6 @@ bool Line_loop()
         {
           lineState = LINE_FOLLOW;
         }
-
-        disableTOFInterrupt(); // TODO
       }
       return false;
     }
