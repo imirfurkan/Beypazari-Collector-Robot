@@ -95,7 +95,7 @@ void setupTOF()
 // void loop()
 // {
 //   // If our ISR pulled the flag low→high, report it
-//   if (triggeredObstacle)
+//   if (triggeredObstacle) // TODO check the response time individually and with other modules
 //   {
 //     Serial.println(F("🚨 TOF interrupt triggered!"));
 //     clearTOFInterrupt(); // clear the sensor’s own interrupt

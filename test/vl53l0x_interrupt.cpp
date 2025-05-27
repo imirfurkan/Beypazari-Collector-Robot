@@ -95,3 +95,65 @@ void loop()
     delay(10);
   }
 }
+
+//////////////////////////////////////////////////////////////////
+///////////// TOF INTERRUPT TEST
+/////////////////////////////////////////////////////////////////
+
+// #include <Arduino.h>
+// #include "tof.h"
+// #include "motors.h"
+
+// // This flag is set by your VL53LOXISR() in tof.cpp
+// extern volatile bool triggeredObstacle;
+
+// void setup()
+// {
+//   Serial.begin(115200);
+//   while (!Serial)
+//   {
+//     delay(10);
+//   }
+//   Serial.println(F("=== TOF-Driven Forward Test ==="));
+
+//   // Initialize TOF sensor and its interrupt
+//   setupTOF();
+
+//   // Initialize motors and start driving forward
+//   Motor_setup();
+//   Motor_driveForward();
+// }
+
+// void loop()
+// {
+//   // If the TOF threshold interrupt fired...
+//   if (triggeredObstacle)
+//   {
+//     // 1) Stop further AVR interrupts while we handle this
+//     disableTOFInterrupt();
+
+//     // 2) Clear the VL53L0X’s own interrupt latch
+
+//     // 3) Report the event
+//     Serial.println(F("🚨 TOF interrupt: obstacle detected!"));
+
+//     // 4) Briefly stop so you see the reaction
+//     Motor_stopAll();
+//     delay(500);
+
+//     // 5) Resume driving forward
+//     Motor_rotateCW();
+
+//     delay(2500);
+//     // 6) Re-arm for the next interrupt
+//     enableTOFInterrupt();
+//     clearTOFInterrupt();
+//     Motor_driveForward();
+
+//     // 7) Clear our software flag
+//     triggeredObstacle = false;
+//   }
+
+//   // Small delay to avoid overwhelming the loop
+//   delay(10);
+// }

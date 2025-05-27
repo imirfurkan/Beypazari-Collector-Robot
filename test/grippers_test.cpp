@@ -215,3 +215,35 @@ void loop()
     break;
   }
 }
+
+// // // // // ///////////////////////////////////////////////////////////////////////////////
+// // // // // ///////////////////// GRIPPER TEST ///////////////////////////////////////////
+// // // // // ///////////////////////////////////////////////////////////////////////////////
+// #include <Arduino.h>
+// #include "Grippers.h"
+
+// void setup()
+// {
+//   // start serial for debug
+//   Serial.begin(115200);
+//   while (!Serial)
+//   {
+//     delay(10);
+//   }
+//   Serial.println(F("=== Gripper Test Started ==="));
+
+//   // initialize gripper hardware and state
+//   Grippers_setup(); //
+// }
+// void loop()
+// {
+//   // run the gripper FSM; if it's still mid-cycle, bail out immediately
+//   if (!Grippers_loop())
+//   { // :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
+//     return;
+//   }
+
+//   // here only when Grippers_loop() just returned true
+//   Serial.println(F(">>> Gripper cycle complete!"));
+//   delay(1000); // give yourself a second before the next cycle
+// }
